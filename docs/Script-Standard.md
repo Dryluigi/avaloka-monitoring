@@ -138,6 +138,8 @@ Stderr is used for:
 
 Scripts should write useful human-readable failure details to stderr when possible.
 
+When a script fails, its stderr or mapped runtime output should be usable to create a concise failure message for the dashboard, run history, and alarms.
+
 ---
 
 ## Prerequisite Output Standard
@@ -203,6 +205,7 @@ The main flow script should:
 - exit with code `0` on success
 - exit non-zero on failure
 - write concise diagnostics to stderr when failing
+- write failure output that can be converted into a short human-readable failure message
 
 Recommended behavior:
 

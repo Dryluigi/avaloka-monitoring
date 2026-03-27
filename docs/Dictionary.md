@@ -130,6 +130,8 @@ A `FlowRun` records the result of a single flow execution.
 
 The `status` field should use one of the defined flow statuses in the `Flow Status` section below.
 
+If the flow fails, the run should also store a human-readable failure message that can be shown in the dashboard, history, and alarm views.
+
 Suggested fields:
 
 - `id`
@@ -139,6 +141,7 @@ Suggested fields:
 - `finished_at`
 - `exit_code`
 - `error_summary`
+- `failure_message`
 - `stdout`
 - `stderr`
 
@@ -193,6 +196,8 @@ Suggested fields:
 ## Alarm
 
 An `Alarm` is a local desktop notification sent when something goes wrong.
+
+An alarm should include a readable message that explains the failure at a glance.
 
 Suggested fields:
 

@@ -124,6 +124,18 @@ Acceptance notes:
 - scheduling information is updated after each execution
 - the UI shows this information in a flow detail view or list view
 
+### View Dashboard At A Glance
+
+As a user, I want a dashboard page that gives me enough information in one look so that I can understand the current operational state without opening multiple screens.
+
+Acceptance notes:
+
+- dashboard shows what is currently executing
+- dashboard shows what will be executed next
+- dashboard shows which flows are currently failing
+- dashboard shows recent alarms
+- dashboard stays readable without requiring deep navigation
+
 ---
 
 ## Script Support
@@ -247,6 +259,7 @@ Acceptance notes:
 - alarm is sent when main script fails
 - alarm is sent when script times out
 - alarm is sent when script cannot be launched
+- every failure event includes a human-readable failure message
 
 ### Receive Actionable Alarm Context
 
@@ -256,7 +269,7 @@ Acceptance notes:
 
 - alarm includes project name
 - alarm includes flow name
-- alarm includes a short failure summary
+- alarm includes a short failure summary or failure message
 - alarm does not expose secret values
 
 ---
@@ -271,7 +284,19 @@ Acceptance notes:
 
 - flow run history is persisted locally
 - user can inspect flow status, timestamps, and failure summary
+- user can inspect the failure message when a run fails
 - stdout and stderr are available for diagnostics within app-defined limits
+
+### Review Failure Message Quickly
+
+As a user, I want failed runs to display a clear failure message so that I can understand the issue without opening raw logs first.
+
+Acceptance notes:
+
+- failed runs include a human-readable failure message
+- prerequisite failures include a prerequisite failure message
+- timeout failures include a timeout-specific failure message
+- failure messages are shown in dashboard and run-history views
 
 ### Review Alarm History
 

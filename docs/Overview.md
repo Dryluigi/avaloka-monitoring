@@ -18,6 +18,7 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - support prerequisites before the main flow execution
 - allow prerequisites to produce values for the main flow
 - provide reusable project-level variables and secrets
+- provide a dashboard that shows what is executing, what will run next, and what is failing
 - send local alarms when failures occur
 - persist monitoring configuration and history locally
 
@@ -31,7 +32,7 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - Project variables and secrets are injected into scripts through environment variables.
 - Prerequisites run before the main flow and can emit `KEY=value` outputs for later steps.
 - Different flows may run concurrently, but the same flow must not overlap with itself.
-- Failures trigger local desktop alarms and are recorded in local history.
+- Failures trigger local desktop alarms, are recorded in local history, and include a human-readable failure message.
 
 ---
 
@@ -40,6 +41,8 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - Product vocabulary and field suggestions: [Dictionary.md](/home/dryluigi/playgrounds/tauri/adv-monitor/docs/Dictionary.md)
 - User-facing requirements and acceptance notes: [User-Stories.md](/home/dryluigi/playgrounds/tauri/adv-monitor/docs/User-Stories.md)
 - Runtime contract for flow and prerequisite scripts: [Script-Standard.md](/home/dryluigi/playgrounds/tauri/adv-monitor/docs/Script-Standard.md)
+- Frontend wiring and architecture planning: [Architecture.md](/home/dryluigi/playgrounds/tauri/adv-monitor/docs/Architecture.md)
+- Implementation progress and completed checklist items: [Implementation-Checklist.md](/home/dryluigi/playgrounds/tauri/adv-monitor/docs/Implementation-Checklist.md)
 
 ---
 
@@ -54,6 +57,7 @@ Included in v1:
 - prerequisite support
 - prerequisite output values
 - project-level variables and secrets
+- dashboard overview with execution and failure visibility
 - local desktop alarms
 - local persistence
 - background execution
