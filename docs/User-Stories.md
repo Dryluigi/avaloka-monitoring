@@ -1,0 +1,297 @@
+# User Stories
+
+## Purpose
+
+This document captures the main user stories for Advanced Monitoring App v1.
+
+It describes what users need to do in the system and what behavior they should expect from the product.
+
+---
+
+## Project Management
+
+### Create Project
+
+As a user, I want to create a project so that I can group related monitoring flows under one shared configuration.
+
+Acceptance notes:
+
+- user can enter project name
+- user can optionally enter description
+- new project is persisted locally
+
+### View Projects
+
+As a user, I want to view all projects so that I can see the monitoring groups I have configured.
+
+Acceptance notes:
+
+- user can view project list
+- each project shows basic metadata
+- user can open a project detail screen
+
+### Update Project
+
+As a user, I want to update a project so that I can rename it or adjust its metadata later.
+
+Acceptance notes:
+
+- user can edit project name
+- user can edit description
+- changes are persisted locally
+
+### Delete Project
+
+As a user, I want to delete a project so that I can remove monitoring setups I no longer need.
+
+Acceptance notes:
+
+- user can delete a project
+- related flows and configuration are removed with it or handled consistently by the app
+
+---
+
+## Flow Management
+
+### Create Flow
+
+As a user, I want to create a flow inside a project so that I can define a scheduled monitoring task.
+
+Acceptance notes:
+
+- flow is created within a selected project
+- user can define the main runtime configuration for the flow
+
+### View Flows
+
+As a user, I want to view flows inside a project so that I can understand what monitoring tasks belong to that project.
+
+Acceptance notes:
+
+- user can see all flows in a project
+- flow list shows essential details such as name, interval, and status
+
+### Update Flow
+
+As a user, I want to update a flow so that I can change its schedule or execution behavior.
+
+Acceptance notes:
+
+- user can edit flow metadata and runtime configuration
+- changes are persisted locally
+
+### Delete Flow
+
+As a user, I want to delete a flow so that I can remove monitoring tasks I no longer need.
+
+Acceptance notes:
+
+- user can delete a flow from a project
+- deleted flow no longer participates in scheduling
+
+---
+
+## Scheduling
+
+### Configure Interval
+
+As a user, I want to set an interval on a flow so that it runs automatically at the cadence I need.
+
+Acceptance notes:
+
+- interval is configured per flow
+- interval is stored persistently
+- the scheduler uses the configured interval for future runs
+
+### Run Flows Independently
+
+As a user, I want each flow to run independently so that one flow schedule does not control another flow schedule.
+
+Acceptance notes:
+
+- each flow is treated as its own scheduled unit
+- different flows may run concurrently
+- the same flow must not overlap with itself
+
+### Check Last Run And Next Run
+
+As a user, I want to check the last run and next run of a flow so that I can understand its recent activity and upcoming schedule.
+
+Acceptance notes:
+
+- user can see the most recent run time of a flow
+- user can see the next scheduled run time of a flow
+- scheduling information is updated after each execution
+- the UI shows this information in a flow detail view or list view
+
+---
+
+## Script Support
+
+### Configure External Script
+
+As a user, I want to attach an external script or executable to a flow so that I can run custom monitoring logic using my preferred tooling.
+
+Acceptance notes:
+
+- flow stores executable path
+- flow stores argument list
+- flow can store working directory and timeout if needed
+
+### Run Script With Project Context
+
+As a user, I want my flow script to receive project context so that I can reuse shared configuration across multiple flows.
+
+Acceptance notes:
+
+- project variables are exposed as environment variables
+- project secrets are exposed as environment variables at runtime
+- flow script can read those values directly from the process environment
+
+---
+
+## Prerequisite Support
+
+### Define Prerequisites
+
+As a user, I want to define prerequisites for a flow so that required checks happen before the main script runs.
+
+Acceptance notes:
+
+- a flow can have multiple prerequisites
+- prerequisites run in configured order
+- prerequisites are stored as part of flow configuration
+
+### Block Main Flow On Prerequisite Failure
+
+As a user, I want the main flow to stop when a prerequisite fails so that invalid execution does not continue.
+
+Acceptance notes:
+
+- if any prerequisite fails, the main flow does not run
+- flow result becomes `prerequisite_failed`
+- the app records failure details
+- the app sends an alarm
+
+### Pass Values From Prerequisite To Main Flow
+
+As a user, I want a prerequisite to output values for the main script so that setup or discovery logic can be reused during execution.
+
+Acceptance notes:
+
+- prerequisite can emit `KEY=value` lines on stdout
+- emitted values are parsed by the app
+- parsed values are injected into later prerequisites and the main flow as environment variables
+
+---
+
+## Variables And Secrets
+
+### Create Project Variables
+
+As a user, I want to define project variables so that shared values do not need to be repeated in every flow.
+
+Acceptance notes:
+
+- user can create key/value variables in a project
+- variables are persisted locally
+- variables are available to all flows in the project
+
+### Create Project Secrets
+
+As a user, I want to define project secrets so that sensitive values can be used by flows without hardcoding them into scripts.
+
+Acceptance notes:
+
+- user can create secret values in a project
+- secrets are persisted securely for v1
+- secrets are masked in the UI where appropriate
+- secrets are available to all flows in the project at runtime
+
+---
+
+## Flow State
+
+### Store Flow Value For Later Execution
+
+As a user, I want a flow to store values that can be used in its next execution so that the flow can keep state across runs.
+
+Acceptance notes:
+
+- a flow can persist key/value data after execution
+- persisted values are available to the same flow in later executions
+- persisted values survive app restart
+- flow state is scoped to the flow and does not automatically leak to other flows
+
+### Use Stored Flow Value In Next Execution
+
+As a user, I want my next flow execution to read values stored by previous runs so that the script can compare, continue, or resume work.
+
+Acceptance notes:
+
+- stored flow values are injected into the runtime of the next execution
+- stored values can be read by prerequisites and the main flow
+- missing stored values are handled gracefully by the script or runtime contract
+
+---
+
+## Alarming
+
+### Send Alarm On Failure
+
+As a user, I want to receive a local alarm when a flow fails so that I know something needs attention immediately.
+
+Acceptance notes:
+
+- alarm is sent when prerequisite fails
+- alarm is sent when main script fails
+- alarm is sent when script times out
+- alarm is sent when script cannot be launched
+
+### Receive Actionable Alarm Context
+
+As a user, I want the alarm to include useful context so that I can quickly identify what failed.
+
+Acceptance notes:
+
+- alarm includes project name
+- alarm includes flow name
+- alarm includes a short failure summary
+- alarm does not expose secret values
+
+---
+
+## Monitoring History
+
+### Review Flow History
+
+As a user, I want to review historical flow runs so that I can inspect failures and understand monitoring behavior over time.
+
+Acceptance notes:
+
+- flow run history is persisted locally
+- user can inspect flow status, timestamps, and failure summary
+- stdout and stderr are available for diagnostics within app-defined limits
+
+### Review Alarm History
+
+As a user, I want to review alarm history so that I can understand what problems occurred previously.
+
+Acceptance notes:
+
+- alarm history is persisted locally
+- user can inspect recent alarms after app restart
+
+---
+
+## Background Behavior
+
+### Keep Monitoring Running In Background
+
+As a user, I want monitoring to continue while the app is minimized so that scheduled checks still run without keeping the window open.
+
+Acceptance notes:
+
+- scheduler continues running in background mode
+- minimizing the window does not stop active monitoring
+- local alarms still work while the app is minimized
