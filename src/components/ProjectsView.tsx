@@ -127,7 +127,7 @@ export function ProjectsView() {
           <div>
             <h3 className="text-base font-semibold text-slate-950">Projects</h3>
             <p className="mt-1 text-sm text-slate-500">
-              Mock project list for layout validation.
+              Persisted project list with mock flow detail still layered on top.
             </p>
           </div>
           <span className="rounded-full border border-[var(--border-soft)] bg-white px-2.5 py-1 text-xs font-medium text-slate-500">

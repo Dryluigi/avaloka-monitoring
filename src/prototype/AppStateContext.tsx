@@ -1,11 +1,19 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 
 import {
   MOCK_FLOWS,
   MOCK_PREREQUISITES,
-  MOCK_PROJECTS,
   MOCK_VARIABLES,
 } from "./mock-data";
+import { listProjects } from "./project-api";
+import { withProjectCollectionCounts } from "./project-summary";
 import type {
   DrawerState,
   FlowFilter,
@@ -37,14 +45,36 @@ type AppStateContextValue = {
 const AppStateContext = createContext<AppStateContextValue | null>(null);
 
 export function AppStateProvider(props: { children: ReactNode }) {
-  const [projects, setProjects] = useState(MOCK_PROJECTS);
+  const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [flows, setFlows] = useState(MOCK_FLOWS);
   const [variables, setVariables] = useState(MOCK_VARIABLES);
   const [prerequisites, setPrerequisites] = useState(MOCK_PREREQUISITES);
-  const [selectedProjectId, setSelectedProjectId] = useState(MOCK_PROJECTS[0]?.id ?? "");
+  const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedFlowId, setSelectedFlowId] = useState(MOCK_FLOWS[0]?.id ?? "");
   const [flowFilter, setFlowFilter] = useState<FlowFilter>("all");
   const [drawer, setDrawer] = useState<DrawerState>({ type: null });
+
+  useEffect(() => {
+    let ignore = false;
+
+    async function loadPersistedProjects() {
+      try {
+        const persistedProjects = await listProjects();
+
+        if (!ignore) {
+          setProjects(withProjectCollectionCounts(persistedProjects, MOCK_FLOWS, MOCK_VARIABLES));
+        }
+      } catch (error) {
+        console.error("Failed to load persisted projects", error);
+      }
+    }
+
+    void loadPersistedProjects();
+
+    return () => {
+      ignore = true;
+    };
+  }, []);
 
   const value = useMemo(
     () => ({

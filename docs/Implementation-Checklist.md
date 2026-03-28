@@ -52,10 +52,10 @@ Goal:
 Checklist:
 
 - [x] define the Phase 2 Rust/Tauri backend structure in the architecture documentation
-- [ ] define the SQLite schema for projects, flows, variables, prerequisites, runs, alarms, and flow state
-- [ ] add Rust models for the persisted entities
-- [ ] add database initialization on app startup
-- [ ] implement project CRUD commands
+- [x] define the SQLite schema for projects, flows, variables, prerequisites, runs, alarms, and flow state
+- [x] add Rust models for the persisted entities
+- [x] add database initialization on app startup
+- [x] implement project CRUD commands
 - [ ] implement flow CRUD commands
 - [ ] implement project variable CRUD commands
 - [ ] implement prerequisite CRUD commands

@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 
 import { getDrawerTitle } from "../prototype/config";
+import { createProject, updateProject } from "../prototype/project-api";
+import { withProjectCounts } from "../prototype/project-summary";
 import { useAppState } from "../prototype/AppStateContext";
 import type {
   FlowDraft,
@@ -187,35 +189,49 @@ export function Drawer() {
               <DrawerActions
                 onCancel={() => setDrawer({ type: null })}
                 onSave={() => {
-                  if (drawer.mode === "create") {
-                    const nextProject = {
-                      id: `proj-${Date.now()}`,
-                      name: projectDraft.name || "Untitled project",
-                      description: projectDraft.description,
-                      enabled: projectDraft.enabled,
-                      variableCount: 0,
-                      secretCount: 0,
-                      flowCount: 0,
-                    };
+                  void (async () => {
+                    try {
+                      if (drawer.mode === "create") {
+                        const createdProject = await createProject({
+                          name: projectDraft.name || "Untitled project",
+                          description: projectDraft.description,
+                          enabled: projectDraft.enabled,
+                        });
+                        const nextProject = withProjectCounts(
+                          createdProject,
+                          flows,
+                          variables,
+                        );
 
-                    setProjects((current) => [nextProject, ...current]);
-                    setSelectedProjectId(nextProject.id);
-                  } else if (drawer.projectId) {
-                    setProjects((current) =>
-                      current.map((project) =>
-                        project.id === drawer.projectId
-                          ? {
-                              ...project,
-                              name: projectDraft.name,
-                              description: projectDraft.description,
-                              enabled: projectDraft.enabled,
-                            }
-                          : project,
-                      ),
-                    );
-                  }
+                        setProjects((current) => [nextProject, ...current]);
+                        setSelectedProjectId(nextProject.id);
+                      } else if (drawer.projectId) {
+                        const updatedProject = await updateProject(
+                          drawer.projectId,
+                          {
+                            name: projectDraft.name,
+                            description: projectDraft.description,
+                            enabled: projectDraft.enabled,
+                          },
+                        );
+                        const nextProject = withProjectCounts(
+                          updatedProject,
+                          flows,
+                          variables,
+                        );
 
-                  setDrawer({ type: null });
+                        setProjects((current) =>
+                          current.map((project) =>
+                            project.id === drawer.projectId ? nextProject : project,
+                          ),
+                        );
+                      }
+
+                      setDrawer({ type: null });
+                    } catch (error) {
+                      console.error("Failed to persist project", error);
+                    }
+                  })();
                 }}
                 saveLabel={
                   drawer.mode === "create" ? "Create project" : "Save project"
