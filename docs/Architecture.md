@@ -1,7 +1,20 @@
-# Frontend Architecture
+# Application Architecture
 
 ## Overview
-The current frontend is structured as a small desktop-style React application with a clear separation between:
+The app is currently split into two layers:
+
+- a React desktop-style frontend
+- a Tauri/Rust backend that is still mostly starter-level today, but now has a defined Phase 2 target structure
+
+The frontend already has a production-leaning shape, while the backend is about to move from prototype scaffolding into local persistence and CRUD support.
+
+The main design goal is to keep both sides easy to evolve without forcing a large rewrite when Phase 2 begins.
+
+---
+
+## Frontend Architecture
+
+The current frontend is structured with a clear separation between:
 
 - app shell and navigation
 - shared app state
@@ -13,7 +26,7 @@ The main design goal is to keep the app easy to evolve from prototype into a rea
 
 ---
 
-## Current Structure
+## Frontend Structure
 
 ### App shell
 File:
@@ -152,7 +165,7 @@ This separation matters because it lets us later replace the source of truth wit
 
 ---
 
-## Wiring Strategy
+## Frontend Wiring Strategy
 
 ### 1. App shell owns only shell concerns
 `App.tsx` is responsible for:
@@ -238,7 +251,7 @@ That means we can replace mock data incrementally without restructuring every sc
 
 ## Architecture Planning
 
-## Near-term plan
+### Near-term frontend plan
 
 ### 1. Keep pages responsible for page-specific derivation
 Continue this rule:
@@ -267,7 +280,250 @@ That would make the shell layer as modular as the page layer already is.
 
 ---
 
-## Future production wiring
+## Backend Architecture For Phase 2
+
+## Goals for Phase 2
+Phase 2 introduces the first real backend responsibilities:
+
+- local SQLite persistence
+- database initialization at app startup
+- Rust-side entity models
+- Tauri commands for CRUD and data loading
+- frontend replacement of mock entity data with Tauri-backed reads and writes
+
+Phase 2 does not yet include:
+
+- scheduling
+- external process execution
+- prerequisites execution
+- alarms delivery
+- tray/background runtime behavior
+
+Those remain in later phases.
+
+---
+
+## Current Tauri Backend
+
+Current files:
+- `src-tauri/src/main.rs`
+- `src-tauri/src/lib.rs`
+
+Current state:
+- `main.rs` boots the app
+- `lib.rs` contains the Tauri builder and a starter command
+
+This is still the default Tauri-style baseline, which is a good place to start from, but it is too small for Phase 2 needs.
+
+---
+
+## Planned Rust Structure
+
+Recommended Phase 2 structure:
+
+- `src-tauri/src/main.rs`
+- `src-tauri/src/lib.rs`
+- `src-tauri/src/errors.rs`
+- `src-tauri/src/state/mod.rs`
+- `src-tauri/src/db/mod.rs`
+- `src-tauri/src/db/connection.rs`
+- `src-tauri/src/db/migrations.rs`
+- `src-tauri/src/models/mod.rs`
+- `src-tauri/src/models/project.rs`
+- `src-tauri/src/models/flow.rs`
+- `src-tauri/src/models/project_variable.rs`
+- `src-tauri/src/models/prerequisite.rs`
+- `src-tauri/src/models/flow_run.rs`
+- `src-tauri/src/models/alarm.rs`
+- `src-tauri/src/models/flow_state.rs`
+- `src-tauri/src/dto/mod.rs`
+- `src-tauri/src/dto/project.rs`
+- `src-tauri/src/dto/flow.rs`
+- `src-tauri/src/dto/project_variable.rs`
+- `src-tauri/src/dto/prerequisite.rs`
+- `src-tauri/src/repositories/mod.rs`
+- `src-tauri/src/repositories/project_repository.rs`
+- `src-tauri/src/repositories/flow_repository.rs`
+- `src-tauri/src/repositories/project_variable_repository.rs`
+- `src-tauri/src/repositories/prerequisite_repository.rs`
+- `src-tauri/src/repositories/flow_run_repository.rs`
+- `src-tauri/src/repositories/alarm_repository.rs`
+- `src-tauri/src/repositories/flow_state_repository.rs`
+- `src-tauri/src/commands/mod.rs`
+- `src-tauri/src/commands/project_commands.rs`
+- `src-tauri/src/commands/flow_commands.rs`
+- `src-tauri/src/commands/project_variable_commands.rs`
+- `src-tauri/src/commands/prerequisite_commands.rs`
+
+Not every file needs to exist on day one, but this is the intended domain-oriented shape.
+
+---
+
+## Backend Layer Responsibilities
+
+### `main.rs`
+Responsibility:
+
+- desktop entry point only
+- call the shared `run()` function
+
+This file should remain minimal.
+
+### `lib.rs`
+Responsibility:
+
+- create the Tauri builder
+- initialize the database
+- construct shared application state
+- register Tauri commands
+- register plugins used by the desktop app
+
+`lib.rs` becomes the backend composition root.
+
+### `errors.rs`
+Responsibility:
+
+- define shared backend error types
+- provide conversion into command-safe error responses
+
+This keeps repositories and commands from inventing their own ad hoc error patterns.
+
+### `state/`
+Responsibility:
+
+- define shared application state such as database handles
+- expose `AppState` for Tauri command access
+
+Recommended contents:
+- database pool or connection manager
+- later, scheduler state and runtime handles
+
+This becomes the stable bridge between startup wiring and command handlers.
+
+### `db/`
+Responsibility:
+
+- create database connections
+- run schema setup or migrations
+- centralize low-level persistence bootstrapping
+
+Recommended split:
+- `connection.rs` for opening the SQLite connection or pool
+- `migrations.rs` for startup migration logic
+- `mod.rs` as the public entry point
+
+This keeps SQL bootstrapping separate from business-domain code.
+
+### `models/`
+Responsibility:
+
+- define persisted Rust-side domain entities
+- represent table-shaped records loaded from SQLite
+
+Examples:
+- `Project`
+- `Flow`
+- `ProjectVariable`
+- `Prerequisite`
+- `FlowRun`
+- `Alarm`
+- `FlowState`
+
+These types should stay close to persistence and domain structure.
+
+### `dto/`
+Responsibility:
+
+- define request and response shapes for Tauri commands
+- separate transport payloads from raw database models when needed
+
+Examples:
+- create/update payloads
+- frontend-facing response structs
+- list-item projections if we do not want to return full DB models
+
+This is useful once the frontend and persistence model stop matching one-to-one.
+
+### `repositories/`
+Responsibility:
+
+- own SQL queries and persistence operations
+- provide focused CRUD methods by domain
+
+Examples:
+- `ProjectRepository`
+- `FlowRepository`
+- `ProjectVariableRepository`
+- `PrerequisiteRepository`
+
+Design rule:
+- repositories talk to SQLite
+- repositories should not contain Tauri command registration logic
+
+This gives us one place to evolve queries, joins, and persistence behavior.
+
+### `commands/`
+Responsibility:
+
+- expose Tauri command functions
+- validate command inputs at the boundary
+- call repositories or domain services
+- map backend errors into frontend-safe responses
+
+Examples:
+- `list_projects`
+- `create_project`
+- `update_project`
+- `delete_project`
+- `list_flows`
+- `create_flow`
+
+Design rule:
+- commands are the API boundary
+- commands should stay thin and orchestration-focused
+
+---
+
+## Backend Wiring Plan
+
+The intended Phase 2 flow is:
+
+1. `main.rs` starts the desktop binary.
+2. `lib.rs` builds the Tauri application.
+3. The database layer initializes SQLite and applies migrations.
+4. Shared `AppState` is created with the database handle.
+5. Tauri commands are registered.
+6. The frontend calls commands through `invoke`.
+7. Commands delegate to repositories.
+8. Repositories read and write SQLite.
+
+In short:
+
+- startup wiring happens in `lib.rs`
+- shared resources live in `state/`
+- persistence lives in `db/` and `repositories/`
+- command API lives in `commands/`
+- domain record definitions live in `models/`
+
+---
+
+## Backend Planning Rules
+
+The intended rules for Phase 2 are:
+
+- `main.rs` stays minimal.
+- `lib.rs` is the composition root, not a place for raw SQL.
+- schema setup belongs in `db/`, not mixed into command handlers.
+- repositories own SQL and persistence logic.
+- commands stay thin and frontend-facing.
+- shared app resources are accessed through `AppState`.
+- scheduling and execution concerns should not be mixed into Phase 2 persistence modules yet.
+
+This helps us avoid creating a monolithic `lib.rs` or command layer too early.
+
+---
+
+## Future Production Wiring
 
 ### Replace mock data with repository or service layer
 Right now pages use:
