@@ -1,13 +1,13 @@
 import { useMemo } from "react";
 
-import { STATUS_META } from "../prototype/config";
+import { STATUS_META } from "../lib/config";
 import {
   MOCK_ACTIVE_EXECUTIONS,
   MOCK_ALARMS,
   MOCK_RUNS,
-} from "../prototype/mock-data";
-import { useAppState } from "../prototype/AppStateContext";
-import type { AppSection } from "../prototype/types";
+} from "../data/mock-data";
+import { useAppState } from "../state/AppStateContext";
+import type { AppSection } from "../types/app";
 import { ActionButton } from "./ui/buttons";
 import { CardSection } from "./ui/layout";
 import { Metric, MetricPanel, StatCard } from "./ui/metrics";

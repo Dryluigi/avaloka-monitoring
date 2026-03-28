@@ -5,9 +5,9 @@ import { DashboardView } from "./components/DashboardView";
 import { Drawer } from "./components/Drawer";
 import { ProjectsView } from "./components/ProjectsView";
 import { RunsView } from "./components/RunsView";
-import { NAV_ITEMS } from "./prototype/config";
-import { AppStateProvider, useAppState } from "./prototype/AppStateContext";
-import type { AppSection } from "./prototype/types";
+import { NAV_ITEMS } from "./lib/config";
+import { AppStateProvider, useAppState } from "./state/AppStateContext";
+import type { AppSection } from "./types/app";
 
 function AppShell() {
   const [section, setSection] = useState<AppSection>("dashboard");

@@ -1,6 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 
-import type { ProjectDraft, ProjectSummary } from "./types";
+import type { ProjectDraft, ProjectSummary } from "../types/app";
 
 export function listProjects() {
   return invoke<ProjectSummary[]>("list_projects");

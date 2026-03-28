@@ -1,13 +1,13 @@
 import { useEffect, useMemo } from "react";
 
-import { STATUS_META } from "../prototype/config";
+import { STATUS_META } from "../lib/config";
 import {
   MOCK_ALARMS,
   MOCK_FLOW_STATE,
   MOCK_RUNS,
-} from "../prototype/mock-data";
-import { useAppState } from "../prototype/AppStateContext";
-import type { FlowFilter } from "../prototype/types";
+} from "../data/mock-data";
+import { useAppState } from "../state/AppStateContext";
+import type { FlowFilter } from "../types/app";
 import { ActionButton } from "./ui/buttons";
 import { CardSection } from "./ui/layout";
 import { Metric, MetricPanel, StatCard } from "./ui/metrics";

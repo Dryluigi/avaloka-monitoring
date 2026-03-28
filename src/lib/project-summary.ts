@@ -1,4 +1,4 @@
-import type { FlowSummary, ProjectSummary, ProjectVariable } from "./types";
+import type { FlowSummary, ProjectSummary, ProjectVariable } from "../types/app";
 
 export function withProjectCounts(
   project: ProjectSummary,

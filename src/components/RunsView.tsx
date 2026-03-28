@@ -1,8 +1,8 @@
 import { useState } from "react";
 
-import { STATUS_META } from "../prototype/config";
-import { MOCK_RUNS } from "../prototype/mock-data";
-import { useAppState } from "../prototype/AppStateContext";
+import { STATUS_META } from "../lib/config";
+import { MOCK_RUNS } from "../data/mock-data";
+import { useAppState } from "../state/AppStateContext";
 import { StatCard } from "./ui/metrics";
 import { StatusPill } from "./ui/status";
 

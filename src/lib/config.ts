@@ -1,4 +1,4 @@
-import type { AppSection, DrawerState, FlowStatus } from "./types";
+import type { AppSection, DrawerState, FlowStatus } from "../types/app";
 
 export const NAV_ITEMS: { id: AppSection; label: string; description: string }[] = [
   { id: "dashboard", label: "Dashboard", description: "One-look execution overview" },

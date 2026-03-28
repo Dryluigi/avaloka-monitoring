@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react";
 
-import { getDrawerTitle } from "../prototype/config";
-import { createProject, updateProject } from "../prototype/project-api";
-import { withProjectCounts } from "../prototype/project-summary";
-import { useAppState } from "../prototype/AppStateContext";
+import { getDrawerTitle } from "../lib/config";
+import { withProjectCounts } from "../lib/project-summary";
+import { createProject, updateProject } from "../services/project-api";
+import { useAppState } from "../state/AppStateContext";
 import type {
   FlowDraft,
   PrerequisiteDraft,
   ProjectDraft,
   VariableDraft,
-} from "../prototype/types";
+} from "../types/app";
 import { DrawerActions } from "./ui/buttons";
 import { Input, TextArea, ToggleGroup } from "./ui/form-controls";
 import { Field } from "./ui/layout";

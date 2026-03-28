@@ -46,7 +46,7 @@ Responsibility:
 
 ### Shared app state
 File:
-- `src/prototype/AppStateContext.tsx`
+- `src/state/AppStateContext.tsx`
 
 Responsibility:
 - hold shared frontend application state
@@ -69,7 +69,7 @@ Why context is used:
 - to let each page read only the state it needs
 - to keep the app shell focused on layout instead of page data wiring
 
-This is currently a practical app-level state store for the prototype.
+This is currently the practical app-level state store for the desktop app.
 
 ---
 
@@ -150,16 +150,20 @@ Design rule:
 
 ---
 
-### Mock data and app metadata
+### Frontend support layers
 Files:
-- `src/prototype/mock-data.ts`
-- `src/prototype/config.ts`
-- `src/prototype/types.ts`
+- `src/data/mock-data.ts`
+- `src/lib/config.ts`
+- `src/lib/project-summary.ts`
+- `src/services/project-api.ts`
+- `src/types/app.ts`
 
 Responsibility:
-- define the frontend-only data model
-- provide stable mock datasets
+- define shared frontend types
+- hold temporary mock datasets for domains not yet wired to persistence
 - provide shared constants like navigation items and status display metadata
+- provide frontend service wrappers for Tauri commands
+- provide mapping helpers for UI-facing summaries
 
 This separation matters because it lets us later replace the source of truth without rewriting the UI structure.
 
@@ -184,7 +188,7 @@ It is not responsible for:
 That logic now lives closer to the page that uses it.
 
 ### 2. Shared state is centralized
-Interactive data used by multiple screens lives in `AppStateContext`.
+Interactive data used by multiple screens lives in `src/state/AppStateContext.tsx`.
 
 This includes:
 - editable project and flow data

@@ -1,4 +1,4 @@
-import { MOCK_ALARMS } from "../prototype/mock-data";
+import { MOCK_ALARMS } from "../data/mock-data";
 import { StatCard } from "./ui/metrics";
 import { EmptyState } from "./ui/status";
 

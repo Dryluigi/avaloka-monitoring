@@ -11,9 +11,9 @@ import {
   MOCK_FLOWS,
   MOCK_PREREQUISITES,
   MOCK_VARIABLES,
-} from "./mock-data";
-import { listProjects } from "./project-api";
-import { withProjectCollectionCounts } from "./project-summary";
+} from "../data/mock-data";
+import { withProjectCollectionCounts } from "../lib/project-summary";
+import { listProjects } from "../services/project-api";
 import type {
   DrawerState,
   FlowFilter,
@@ -21,7 +21,7 @@ import type {
   ProjectSummary,
   ProjectVariable,
   PrerequisiteSummary,
-} from "./types";
+} from "../types/app";
 
 type AppStateContextValue = {
   projects: ProjectSummary[];

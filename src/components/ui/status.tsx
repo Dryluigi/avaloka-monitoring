@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
-import { STATUS_META } from "../../prototype/config";
-import type { FlowStatus } from "../../prototype/types";
+import { STATUS_META } from "../../lib/config";
+import type { FlowStatus } from "../../types/app";
 
 export function StatusPill(props: { status: FlowStatus; children: ReactNode }) {
   return (

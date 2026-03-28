@@ -7,7 +7,7 @@ import type {
   ProjectSummary,
   ProjectVariable,
   PrerequisiteSummary,
-} from "./types";
+} from "../types/app";
 
 export const MOCK_PROJECTS: ProjectSummary[] = [
   {
