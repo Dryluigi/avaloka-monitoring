@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { STATUS_META } from "../lib/config";
 import { formatUserFacingRunSummary } from "../lib/run-output";
@@ -7,12 +7,52 @@ import { StatCard } from "./ui/metrics";
 import { StatusPill } from "./ui/status";
 
 export function RunsView() {
-  const { projects, runs } = useAppState();
+  const { flows, projects, runs } = useAppState();
   const pageSize = 6;
   const [page, setPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(runs.length / pageSize));
+  const [projectFilter, setProjectFilter] = useState("all");
+  const [flowFilter, setFlowFilter] = useState("all");
+
+  const flowOptions = useMemo(() => {
+    if (projectFilter === "all") {
+      return flows;
+    }
+
+    return flows.filter((flow) => flow.projectId === projectFilter);
+  }, [flows, projectFilter]);
+
+  const filteredRuns = useMemo(
+    () =>
+      runs.filter((run) => {
+        if (projectFilter !== "all" && run.projectId !== projectFilter) {
+          return false;
+        }
+
+        if (flowFilter !== "all" && run.flowId !== flowFilter) {
+          return false;
+        }
+
+        return true;
+      }),
+    [flowFilter, projectFilter, runs],
+  );
+
+  useEffect(() => {
+    if (
+      flowFilter !== "all" &&
+      !flowOptions.some((flow) => flow.id === flowFilter)
+    ) {
+      setFlowFilter("all");
+    }
+  }, [flowFilter, flowOptions]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [flowFilter, projectFilter]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRuns.length / pageSize));
   const currentPage = Math.min(page, totalPages);
-  const paginatedRuns = runs.slice(
+  const paginatedRuns = filteredRuns.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize,
   );
@@ -32,11 +72,11 @@ export function RunsView() {
           </div>
           <div className="grid gap-3 sm:grid-cols-3">
             <StatCard label="Projects" value={String(projects.length)} />
-            <StatCard label="Recent runs" value={String(runs.length)} />
+            <StatCard label="Recent runs" value={String(filteredRuns.length)} />
             <StatCard
               label="Failures"
               value={String(
-                runs.filter((run) => run.status !== "success").length,
+                filteredRuns.filter((run) => run.status !== "success").length,
               )}
             />
           </div>
@@ -44,6 +84,78 @@ export function RunsView() {
       </section>
 
       <section className="rounded-2xl border border-[var(--border-soft)] bg-[var(--panel)] p-5 xl:flex xl:min-h-0 xl:flex-1 xl:flex-col">
+        <div className="mb-4 grid gap-3 md:grid-cols-2">
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Project filter</span>
+            <div className="relative">
+              <select
+                value={projectFilter}
+                onChange={(event) => {
+                  setProjectFilter(event.target.value);
+                }}
+                className="w-full appearance-none rounded-xl border border-[var(--border-soft)] bg-white px-4 py-3 pr-11 text-sm text-slate-900 outline-none transition focus:border-[var(--accent-border)] focus:ring-4 focus:ring-sky-100"
+              >
+                <option value="all">All projects</option>
+                {projects.map((project) => (
+                  <option key={project.id} value={project.id}>
+                    {project.name}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </div>
+          </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-700">Flow filter</span>
+            <div className="relative">
+              <select
+                value={flowFilter}
+                disabled={projectFilter === "all"}
+                onChange={(event) => {
+                  setFlowFilter(event.target.value);
+                }}
+                className="w-full appearance-none rounded-xl border border-[var(--border-soft)] bg-white px-4 py-3 pr-11 text-sm text-slate-900 outline-none transition focus:border-[var(--accent-border)] focus:ring-4 focus:ring-sky-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+              >
+                <option value="all">All flows</option>
+                {flowOptions.map((flow) => (
+                  <option key={flow.id} value={flow.id}>
+                    {flow.name}
+                  </option>
+                ))}
+              </select>
+              <span className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+                <svg
+                  aria-hidden="true"
+                  viewBox="0 0 20 20"
+                  className="h-4 w-4"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                >
+                  <path d="M5 7.5 10 12.5 15 7.5" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </div>
+            {projectFilter === "all" ? (
+              <p className="text-xs text-slate-500">
+                Select a project first to filter by flow.
+              </p>
+            ) : null}
+          </label>
+        </div>
+
         <div className="space-y-3 xl:min-h-0 xl:flex-1 xl:overflow-y-auto xl:pr-1">
           {paginatedRuns.map((run) => (
             <div
