@@ -44,6 +44,7 @@ function getReadableIntervalLabel(intervalLabel: string) {
 
 export function ProjectsView() {
   const {
+    activeExecutions,
     alarms,
     flowStateEntries,
     projects,
@@ -125,6 +126,9 @@ export function ProjectsView() {
   const selectedFlowState = flowStateEntries.filter(
     (entry) => entry.flowId === selectedFlow?.id,
   );
+  const activeExecutionFlowIds = new Set(
+    activeExecutions.map((execution) => execution.flowId),
+  );
 
   const projectStats = selectedProject
     ? {
@@ -140,6 +144,9 @@ export function ProjectsView() {
             (flow.status === "failed" ||
               flow.status === "prerequisite_failed" ||
               flow.status === "timed_out"),
+        ).length,
+        executingFlows: activeExecutions.filter(
+          (execution) => execution.projectId === selectedProject.id,
         ).length,
         nextDue:
           flows
@@ -298,6 +305,11 @@ export function ProjectsView() {
                 label="Failing flows"
                 value={String(projectStats.failingFlows)}
               />
+              <StatCard
+                label="Executing now"
+                value={String(projectStats.executingFlows)}
+                tone="teal"
+              />
               <StatCard label="Next due" value={projectStats.nextDue} />
             </div>
           ) : null}
@@ -367,16 +379,23 @@ export function ProjectsView() {
                 />
               ) : (
                 <div className="mt-5 space-y-3">
-                  {visibleFlows.map((flow) => (
+                  {visibleFlows.map((flow) => {
+                    const isExecuting = activeExecutionFlowIds.has(flow.id);
+
+                    return (
                     <button
                       key={flow.id}
                       type="button"
                       onClick={() => setSelectedFlowId(flow.id)}
                       className={[
                         "w-full rounded-2xl border p-4 text-left transition",
-                        flow.id === selectedFlowId
-                          ? "border-[var(--accent-border)] bg-[var(--accent-soft)] shadow-[var(--shadow-soft)]"
-                          : "border-[var(--border-soft)] bg-white hover:border-[var(--border-strong)]",
+                        isExecuting && flow.id === selectedFlowId
+                          ? "border-teal-300 bg-teal-50"
+                          : isExecuting
+                            ? "border-teal-200 bg-teal-50/70"
+                            : flow.id === selectedFlowId
+                              ? "border-[var(--accent-border)] bg-[var(--accent-soft)] shadow-[var(--shadow-soft)]"
+                              : "border-[var(--border-soft)] bg-white hover:border-[var(--border-strong)]",
                       ].join(" ")}
                     >
                       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -385,6 +404,12 @@ export function ProjectsView() {
                             <span className="text-sm font-semibold text-slate-900">
                               {flow.name}
                             </span>
+                            {isExecuting ? (
+                              <span className="inline-flex items-center gap-1.5 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-[11px] font-medium text-teal-700">
+                                <span className="h-2 w-2 rounded-full bg-teal-500 animate-pulse" />
+                                Executing
+                              </span>
+                            ) : null}
                             <StatusPill status={flow.status}>
                               {STATUS_META[flow.status].label}
                             </StatusPill>
@@ -410,7 +435,8 @@ export function ProjectsView() {
                         </div>
                       </div>
                     </button>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </section>

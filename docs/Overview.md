@@ -37,6 +37,7 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - Different flows may run concurrently, but the same flow must not overlap with itself.
 - Failures trigger local desktop alarms, are recorded in local history, and include a human-readable failure message.
 - While the app is open, execution-related UI updates are planned to be driven by Tauri events from the Rust backend.
+- In the current UI, running flows are highlighted in the Projects view so execution state is visible without opening the dashboard.
 
 ---
 
