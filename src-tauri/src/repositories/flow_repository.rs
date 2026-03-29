@@ -44,6 +44,11 @@ pub fn create_flow(db_path: &Path, input: CreateFlowInput) -> AppResult<FlowList
     let id = generate_id("flow");
     let args_json = serde_json::to_string(&input.args)
         .map_err(|error| AppError::InvalidState(format!("Could not serialize flow args: {error}")))?;
+    let next_run_at = if input.enabled {
+        Some(schedule_from_now(&connection, input.interval_seconds)?)
+    } else {
+        Some("Paused".to_string())
+    };
 
     connection.execute(
         r#"
@@ -72,7 +77,7 @@ pub fn create_flow(db_path: &Path, input: CreateFlowInput) -> AppResult<FlowList
             args_json,
             input.working_directory.trim(),
             input.timeout_seconds,
-            if input.enabled { Some("Pending schedule") } else { Some("Paused") },
+            next_run_at,
             if input.enabled { "success" } else { "disabled" },
         ],
     )?;
@@ -99,7 +104,10 @@ pub fn update_flow(db_path: &Path, input: UpdateFlowInput) -> AppResult<FlowList
             working_directory = ?8,
             timeout_seconds = ?9,
             next_run_at = CASE
-                WHEN ?4 = 1 AND (next_run_at IS NULL OR next_run_at = 'Paused') THEN 'Pending schedule'
+                WHEN ?4 = 1 AND last_run_at IS NOT NULL AND last_run_at != ''
+                    THEN datetime(last_run_at, '+' || ?5 || ' seconds')
+                WHEN ?4 = 1
+                    THEN datetime('now', 'localtime', '+' || ?5 || ' seconds')
                 WHEN ?4 = 0 THEN 'Paused'
                 ELSE next_run_at
             END,
@@ -202,6 +210,16 @@ fn format_interval_label(interval_seconds: i64) -> String {
     } else {
         format!("Every {interval_seconds} sec")
     }
+}
+
+fn schedule_from_now(connection: &rusqlite::Connection, interval_seconds: i64) -> AppResult<String> {
+    connection
+        .query_row(
+            "SELECT datetime('now', 'localtime', '+' || ?1 || ' seconds')",
+            params![interval_seconds],
+            |row| row.get(0),
+        )
+        .map_err(Into::into)
 }
 
 fn generate_id(prefix: &str) -> String {

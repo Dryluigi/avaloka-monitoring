@@ -367,6 +367,7 @@ Recommended Phase 2 structure:
 - `src-tauri/src/repositories/flow_run_repository.rs`
 - `src-tauri/src/repositories/alarm_repository.rs`
 - `src-tauri/src/repositories/flow_state_repository.rs`
+- `src-tauri/src/scheduler/mod.rs`
 - `src-tauri/src/commands/mod.rs`
 - `src-tauri/src/commands/project_commands.rs`
 - `src-tauri/src/commands/flow_commands.rs`
@@ -515,6 +516,12 @@ The intended Phase 2 flow is:
 7. Commands delegate to repositories.
 8. Repositories read and write SQLite.
 
+At the current Phase 3 slice:
+
+- startup also bootstraps scheduler metadata
+- enabled flows are registered with persisted `next_run_at` timestamps
+- disabled flows are persisted as paused
+
 In short:
 
 - startup wiring happens in `lib.rs`
@@ -535,7 +542,8 @@ The intended rules for Phase 2 are:
 - repositories own SQL and persistence logic.
 - commands stay thin and frontend-facing.
 - shared app resources are accessed through `AppState`.
-- scheduling and execution concerns should not be mixed into Phase 2 persistence modules yet.
+- scheduling bootstrap belongs in `scheduler/`.
+- full runtime execution should still stay separate from repository CRUD modules.
 
 This helps us avoid creating a monolithic `lib.rs` or command layer too early.
 

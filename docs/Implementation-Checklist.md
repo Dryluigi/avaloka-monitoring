@@ -67,7 +67,7 @@ Definition of done:
 
 - projects and flows are stored locally
 - the app reloads persisted data after restart
-- frontend views are  backed by real local data
+- frontend views are backed by real local data
 
 ---
 
@@ -79,7 +79,7 @@ Goal:
 
 Checklist:
 
-- [ ] implement scheduler startup and flow registration
+- [x] implement scheduler startup and flow registration
 - [ ] calculate and persist `last_run_at` and `next_run_at`
 - [ ] prevent overlap for the same flow
 - [ ] allow different flows to run independently
@@ -87,7 +87,7 @@ Checklist:
 - [ ] support working directory and timeout configuration
 - [ ] capture stdout, stderr, exit code, and timestamps
 - [ ] store flow run history after execution
-- [ ] update the frontend with last-run and next-run data
+- [x] update the frontend with last-run and next-run data
 
 Definition of done:
 

@@ -56,3 +56,25 @@ export function parseIntervalLabelToSeconds(intervalLabel: string) {
 
   return value;
 }
+
+export function formatScheduleTimestamp(value: string) {
+  if (
+    value === "Paused" ||
+    value === "Pending schedule" ||
+    value === "Not yet" ||
+    !value
+  ) {
+    return value;
+  }
+
+  const parsed = new Date(value.replace(" ", "T"));
+
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  return parsed.toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
+}

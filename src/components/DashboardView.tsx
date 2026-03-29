@@ -2,6 +2,7 @@ import { useMemo } from "react";
 
 import { STATUS_META } from "../lib/config";
 import { MOCK_ACTIVE_EXECUTIONS } from "../data/mock-data";
+import { formatScheduleTimestamp } from "../lib/time";
 import { useAppState } from "../state/AppStateContext";
 import type { AppSection } from "../types/app";
 import { ActionButton } from "./ui/buttons";
@@ -44,7 +45,9 @@ export function DashboardView(props: {
           flow.status === "prerequisite_failed" ||
           flow.status === "timed_out",
       ).length,
-      nextExecution: upcomingFlows[0]?.nextRunAt ?? "No upcoming run",
+      nextExecution: upcomingFlows[0]
+        ? formatScheduleTimestamp(upcomingFlows[0].nextRunAt)
+        : "No upcoming run",
     }),
     [activeExecutions.length, flows, upcomingFlows],
   );
@@ -175,10 +178,10 @@ export function DashboardView(props: {
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium text-slate-900">
-                        {flow.nextRunAt}
+                        {formatScheduleTimestamp(flow.nextRunAt)}
                       </div>
                       <div className="mt-1 text-xs text-slate-400">
-                        {flow.lastRunAt}
+                        {formatScheduleTimestamp(flow.lastRunAt)}
                       </div>
                     </div>
                   </div>

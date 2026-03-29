@@ -4,6 +4,7 @@ mod dto;
 mod errors;
 mod models;
 mod repositories;
+mod scheduler;
 mod state;
 
 use tauri::Manager;
@@ -18,6 +19,7 @@ pub fn run() {
             let db_path = app_data_dir.join("adv-monitor.sqlite3");
 
             db::initialize_database(&db_path)?;
+            scheduler::bootstrap_scheduler(&db_path)?;
             app.manage(AppState::new(db_path));
 
             Ok(())

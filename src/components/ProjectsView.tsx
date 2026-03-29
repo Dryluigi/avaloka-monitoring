@@ -1,7 +1,11 @@
 import { useEffect, useMemo } from "react";
 
 import { STATUS_META } from "../lib/config";
-import { formatSecondsBreakdown, parseIntervalLabelToSeconds } from "../lib/time";
+import {
+  formatScheduleTimestamp,
+  formatSecondsBreakdown,
+  parseIntervalLabelToSeconds,
+} from "../lib/time";
 import { useAppState } from "../state/AppStateContext";
 import type { FlowFilter } from "../types/app";
 import { ActionButton } from "./ui/buttons";
@@ -395,8 +399,14 @@ export function ProjectsView() {
                             value={getReadableIntervalLabel(flow.intervalLabel)}
                             valueClassName="text-xs leading-5 text-slate-700"
                           />
-                          <Metric label="Last run" value={flow.lastRunAt} />
-                          <Metric label="Next run" value={flow.nextRunAt} />
+                          <Metric
+                            label="Last run"
+                            value={formatScheduleTimestamp(flow.lastRunAt)}
+                          />
+                          <Metric
+                            label="Next run"
+                            value={formatScheduleTimestamp(flow.nextRunAt)}
+                          />
                         </div>
                       </div>
                     </button>
@@ -543,11 +553,11 @@ export function ProjectsView() {
                     />
                     <MetricPanel
                       label="Last run"
-                      value={selectedFlow.lastRunAt}
+                      value={formatScheduleTimestamp(selectedFlow.lastRunAt)}
                     />
                     <MetricPanel
                       label="Next run"
-                      value={selectedFlow.nextRunAt}
+                      value={formatScheduleTimestamp(selectedFlow.nextRunAt)}
                     />
                   </div>
 
