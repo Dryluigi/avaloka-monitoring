@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { STATUS_META } from "../../lib/config";
+import { formatUserFacingRunSummary } from "../../lib/run-output";
 import { formatScheduleTimestamp } from "../../lib/time";
 import type {
   DrawerState,
@@ -225,7 +226,9 @@ export function FlowInspectorPanels(props: {
                   </div>
                   <span className="text-xs text-slate-500">{run.durationLabel}</span>
                 </div>
-                <p className="mt-2 text-sm leading-6 text-slate-500">{run.summary}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-500">
+                  {formatUserFacingRunSummary(run.summary)}
+                </p>
                 {run.failureMessage ? (
                   <div className="mt-3 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-700">
                     {run.failureMessage}

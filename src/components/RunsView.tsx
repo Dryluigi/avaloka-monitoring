@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { STATUS_META } from "../lib/config";
+import { formatUserFacingRunSummary } from "../lib/run-output";
 import { useAppState } from "../state/AppStateContext";
 import { StatCard } from "./ui/metrics";
 import { StatusPill } from "./ui/status";
@@ -67,7 +68,7 @@ export function RunsView() {
                   </span>
                 </div>
                 <p className="mt-2 text-sm leading-6 text-slate-500">
-                  {run.summary}
+                  {formatUserFacingRunSummary(run.summary)}
                 </p>
                 {run.failureMessage ? (
                   <div className="mt-3 rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-sm leading-6 text-rose-700">

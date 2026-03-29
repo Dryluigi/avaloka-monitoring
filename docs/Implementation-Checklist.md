@@ -223,8 +223,8 @@ Checklist:
 - [ ] add a live clock to the topbar on every page using `29 Mar 2026, 21:10:ss` format
 - [ ] add a max height with internal scrolling to the project variables section
 - [ ] add a max height with internal scrolling to the recent alarms section in Projects
-- [ ] hide `STATE:...` and other runtime metadata lines from user-facing run summaries in Projects `Recent runs`
-- [ ] hide `STATE:...` and other runtime metadata lines from user-facing run summaries in the Runs page
+- [x] hide `STATE:...` and other runtime metadata lines from user-facing run summaries in Projects `Recent runs`
+- [x] hide `STATE:...` and other runtime metadata lines from user-facing run summaries in the Runs page
 - [ ] clean up UI consistency and empty states
 - [ ] review documentation against actual implementation
 
