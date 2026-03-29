@@ -77,6 +77,11 @@ This is currently the practical app-level state store for the desktop app.
 Files:
 - `src/components/DashboardView.tsx`
 - `src/components/ProjectsView.tsx`
+- `src/components/projects/ProjectSidebar.tsx`
+- `src/components/projects/ProjectHeader.tsx`
+- `src/components/projects/FlowListSection.tsx`
+- `src/components/projects/ProjectMetaPanels.tsx`
+- `src/components/projects/FlowInspectorPanels.tsx`
 - `src/components/RunsView.tsx`
 - `src/components/AlarmsView.tsx`
 
@@ -87,7 +92,7 @@ Responsibility:
 
 Examples:
 - `DashboardView` reads flows from app state and combines them with mock runs and alarms to derive summary cards, failing items, and upcoming items.
-- `ProjectsView` is responsible for selecting project-specific variables, project alarms, flow runs, flow state, and filtered flow lists.
+- `ProjectsView` now acts as the coordinator for project-specific state, while section components such as `ProjectSidebar`, `FlowListSection`, and `FlowInspectorPanels` own the major UI slices.
 - `RunsView` owns run pagination.
 - `AlarmsView` owns alarm list presentation.
 
@@ -96,6 +101,11 @@ Design rule:
 - `App.tsx` should not assemble page payloads for them
 
 This keeps each page more autonomous and reduces coupling with the shell.
+
+For the larger pages, the same rule now applies one level deeper:
+- the top-level view coordinates selection and derived data
+- section components render one coherent part of the screen
+- helpers hold small formatting or derivation utilities that would otherwise bloat the view
 
 ---
 
@@ -368,12 +378,19 @@ Those remain in later phases.
 Current files:
 - `src-tauri/src/main.rs`
 - `src-tauri/src/lib.rs`
+- `src-tauri/src/scheduler/mod.rs`
+- `src-tauri/src/scheduler/events.rs`
+- `src-tauri/src/scheduler/runtime.rs`
+- `src-tauri/src/scheduler/store.rs`
+- `src-tauri/src/scheduler/types.rs`
 
 Current state:
 - `main.rs` boots the app
-- `lib.rs` contains the Tauri builder and a starter command
+- `lib.rs` contains the Tauri builder and startup composition
+- `scheduler/mod.rs` coordinates scheduling and flow execution
+- scheduler helpers are split by responsibility into event emission, runtime command handling, query/storage access, and shared scheduler types
 
-This is still the default Tauri-style baseline, which is a good place to start from, but it is too small for Phase 2 needs.
+This is no longer just the default Tauri baseline. The backend has started moving into a more maintainable module-oriented shape, especially around the runtime scheduler.
 
 ---
 
@@ -410,6 +427,10 @@ Recommended Phase 2 structure:
 - `src-tauri/src/repositories/alarm_repository.rs`
 - `src-tauri/src/repositories/flow_state_repository.rs`
 - `src-tauri/src/scheduler/mod.rs`
+- `src-tauri/src/scheduler/events.rs`
+- `src-tauri/src/scheduler/runtime.rs`
+- `src-tauri/src/scheduler/store.rs`
+- `src-tauri/src/scheduler/types.rs`
 - `src-tauri/src/commands/mod.rs`
 - `src-tauri/src/commands/project_commands.rs`
 - `src-tauri/src/commands/flow_commands.rs`
@@ -417,6 +438,11 @@ Recommended Phase 2 structure:
 - `src-tauri/src/commands/prerequisite_commands.rs`
 
 Not every file needs to exist on day one, but this is the intended domain-oriented shape.
+
+Current refactoring direction:
+- large React screens are being split into section components to improve local discoverability
+- large Rust runtime files are being split into helper modules so orchestration code stays readable
+- the justification for these splits is maintenance and crawlability, not architectural churn for its own sake
 
 ---
 
