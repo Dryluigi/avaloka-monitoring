@@ -118,7 +118,7 @@ Checklist:
 - [ ] parse prerequisite stdout as `KEY=value` output
 - [ ] inject prerequisite output values into later prerequisites
 - [ ] inject prerequisite output values into the main flow
-- [ ] inject project variables and secrets into runtime environment
+- [x] inject project variables and secrets into runtime environment
 - [ ] record prerequisite run history
 
 Definition of done:

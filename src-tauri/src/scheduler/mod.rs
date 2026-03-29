@@ -13,6 +13,7 @@ use crate::errors::{AppError, AppResult};
 #[derive(Clone, Debug)]
 struct DueFlow {
     id: String,
+    project_id: String,
     interval_seconds: i64,
     executable_path: String,
     args: Vec<String>,
@@ -88,8 +89,10 @@ fn scan_and_run_due_flows(
 fn execute_flow(db_path: &Path, flow: DueFlow) -> AppResult<()> {
     let started_at = current_local_datetime(db_path)?;
     let started_instant = Instant::now();
+    let runtime_env = load_project_runtime_env(db_path, &flow.project_id)?;
 
-    let mut child = match Command::new(&flow.executable_path)
+    let mut command = Command::new(&flow.executable_path);
+    command
         .args(&flow.args)
         .current_dir(if flow.working_directory.is_empty() {
             "."
@@ -97,9 +100,13 @@ fn execute_flow(db_path: &Path, flow: DueFlow) -> AppResult<()> {
             flow.working_directory.as_str()
         })
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-    {
+        .stderr(Stdio::piped());
+
+    for (key, value) in &runtime_env {
+        command.env(key, value);
+    }
+
+    let mut child = match command.spawn() {
         Ok(child) => child,
         Err(error) => {
             let finished_at = current_local_datetime(db_path)?;
@@ -195,6 +202,7 @@ fn list_due_flows(connection: &Connection) -> AppResult<Vec<DueFlow>> {
         r#"
         SELECT
             id,
+            project_id,
             interval_seconds,
             executable_path,
             args_json,
@@ -210,16 +218,17 @@ fn list_due_flows(connection: &Connection) -> AppResult<Vec<DueFlow>> {
     )?;
 
     let rows = statement.query_map([], |row| {
-        let args_json: String = row.get(3)?;
+        let args_json: String = row.get(4)?;
         let args = serde_json::from_str::<Vec<String>>(&args_json).unwrap_or_default();
 
         Ok(DueFlow {
             id: row.get(0)?,
-            interval_seconds: row.get(1)?,
-            executable_path: row.get(2)?,
+            project_id: row.get(1)?,
+            interval_seconds: row.get(2)?,
+            executable_path: row.get(3)?,
             args,
-            working_directory: row.get(4)?,
-            timeout_seconds: row.get(5)?,
+            working_directory: row.get(5)?,
+            timeout_seconds: row.get(6)?,
         })
     })?;
 
@@ -229,6 +238,49 @@ fn list_due_flows(connection: &Connection) -> AppResult<Vec<DueFlow>> {
     }
 
     Ok(flows)
+}
+
+fn load_project_runtime_env(db_path: &Path, project_id: &str) -> AppResult<Vec<(String, String)>> {
+    let connection = open_connection(db_path)?;
+    let mut statement = connection.prepare(
+        r#"
+        SELECT key, value
+        FROM project_variables
+        WHERE project_id = ?1
+        ORDER BY created_at ASC, key ASC
+        "#,
+    )?;
+
+    let rows = statement.query_map(params![project_id], |row| {
+        let key: String = row.get(0)?;
+        let value: String = row.get(1)?;
+        Ok((key, value))
+    })?;
+
+    let mut env_vars = Vec::new();
+
+    for row in rows {
+        let (key, value) = row?;
+
+        if is_valid_env_key(&key) {
+            env_vars.push((key, value));
+        }
+    }
+
+    Ok(env_vars)
+}
+
+fn is_valid_env_key(key: &str) -> bool {
+    let mut chars = key.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+
+    if !(first == '_' || first.is_ascii_alphabetic()) {
+        return false;
+    }
+
+    chars.all(|char| char == '_' || char.is_ascii_alphanumeric())
 }
 
 fn persist_flow_run(

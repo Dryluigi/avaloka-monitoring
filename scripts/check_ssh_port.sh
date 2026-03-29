@@ -2,12 +2,12 @@
 
 set -u
 
-HOST="${1:-}"
-PORT="${2:-22}"
+HOST="${SSH_HOST:-${1:-}}"
+PORT="${SSH_PORT:-${2:-22}}"
 TIMEOUT_SECONDS=30
 
 if [[ -z "${HOST}" ]]; then
-  echo "Usage: $0 <host> [port]" >&2
+  echo "Missing SSH host. Set SSH_HOST or pass <host> [port]." >&2
   exit 2
 fi
 

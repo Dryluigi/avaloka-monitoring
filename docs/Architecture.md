@@ -179,6 +179,7 @@ At the current stage:
 - currently executing dashboard cards are still mock-backed until scheduler/runtime work lands
 - project secrets are currently masked in frontend responses, but not yet hardened with stronger at-rest secret storage
 - real-time UI updates are planned to use Tauri events as the primary mechanism instead of frontend polling
+- flow execution already injects project variables and secrets into the runtime environment for main flow commands
 
 This separation matters because it lets us replace the remaining mock-backed domains without rewriting the UI structure.
 
@@ -342,6 +343,13 @@ Phase 2 does not yet include:
 - tray/background runtime behavior
 
 Those remain in later phases.
+
+## Current Runtime Notes
+
+- The scheduler now injects project variables and secrets into the main flow process environment before launch.
+- Variables are passed using their configured keys as environment variable names.
+- Keys must be environment-variable safe to be injected cleanly.
+- Prerequisite runtime execution and prerequisite-to-flow value propagation are still pending later phases.
 
 ---
 
