@@ -166,16 +166,16 @@ Goal:
 Checklist:
 
 - [ ] implement local desktop notification integration
-- [ ] send alarm on prerequisite failure
-- [ ] send alarm on main script failure
-- [ ] send alarm on timeout
-- [ ] send alarm on launch failure
-- [ ] persist alarm history locally
+- [x] send alarm on prerequisite failure
+- [x] send alarm on main script failure
+- [x] send alarm on timeout
+- [x] send alarm on launch failure
+- [x] persist alarm history locally
 - [x] show alarm history in the frontend
 - [x] show error summary without exposing secrets
-- [ ] emit Tauri events when alarms are created
-- [ ] refresh the Alarms view automatically when new alarms are created
-- [ ] subscribe to Tauri alarm events in the frontend shared app state
+- [x] emit Tauri events when alarms are created
+- [x] refresh the Alarms view automatically when new alarms are created
+- [x] subscribe to Tauri alarm events in the frontend shared app state
 
 Definition of done:
 

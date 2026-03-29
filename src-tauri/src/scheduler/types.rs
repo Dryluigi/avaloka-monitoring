@@ -47,6 +47,12 @@ pub(crate) struct FlowExecutionFinishedEvent {
     pub flow_id: String,
 }
 
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub(crate) struct AlarmCreatedEvent {
+    pub flow_id: String,
+}
+
 pub(crate) struct CommandRunResult {
     pub status: String,
     pub summary: String,

@@ -15,12 +15,14 @@ use crate::db::connection::open_connection;
 use crate::errors::{AppError, AppResult};
 
 use self::events::{
-    emit_execution_finished, emit_execution_started, format_flow_note, format_prerequisite_note,
+    emit_alarm_created, emit_execution_finished, emit_execution_started, format_flow_note,
+    format_prerequisite_note,
 };
 use self::runtime::{execute_command, parse_runtime_output_env, upsert_env};
 use self::store::{
     current_local_datetime, list_due_flows, list_enabled_prerequisites, load_project_runtime_env,
-    pause_disabled_flows, persist_flow_run, register_enabled_flows, update_prerequisite_status,
+    pause_disabled_flows, persist_alarm, persist_flow_run, register_enabled_flows,
+    update_prerequisite_status,
 };
 use self::types::DueFlow;
 
@@ -147,6 +149,13 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
                     &command_result.stderr_text,
                     flow.interval_seconds,
                 )?;
+                create_alarm_record(
+                    db_path,
+                    &app_handle,
+                    &flow.id,
+                    &finished_at,
+                    &failure_message,
+                )?;
 
                 emit_execution_finished(&app_handle, &flow.id);
                 return Ok(());
@@ -172,6 +181,13 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
                     "",
                     &failure_message,
                     flow.interval_seconds,
+                )?;
+                create_alarm_record(
+                    db_path,
+                    &app_handle,
+                    &flow.id,
+                    &finished_at,
+                    &failure_message,
                 )?;
 
                 emit_execution_finished(&app_handle, &flow.id);
@@ -219,6 +235,7 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
                 &message,
                 flow.interval_seconds,
             )?;
+            create_alarm_record(db_path, &app_handle, &flow.id, &finished_at, &message)?;
 
             emit_execution_finished(&app_handle, &flow.id);
             return Ok(());
@@ -241,7 +258,27 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
         flow.interval_seconds,
     )?;
 
+    if result.status != "success" {
+        let alarm_message = result
+            .failure_message
+            .clone()
+            .unwrap_or_else(|| result.summary.clone());
+        create_alarm_record(db_path, &app_handle, &flow.id, &finished_at, &alarm_message)?;
+    }
+
     emit_execution_finished(&app_handle, &flow.id);
 
+    Ok(())
+}
+
+fn create_alarm_record(
+    db_path: &Path,
+    app_handle: &AppHandle,
+    flow_id: &str,
+    created_at: &str,
+    message: &str,
+) -> AppResult<()> {
+    persist_alarm(db_path, flow_id, "critical", created_at, message)?;
+    emit_alarm_created(app_handle, flow_id);
     Ok(())
 }

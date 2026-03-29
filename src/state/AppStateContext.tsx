@@ -17,6 +17,7 @@ import { listProjectVariables } from "../services/project-variable-api";
 import { listAlarms, listFlowRuns, listFlowState } from "../services/runtime-read-api";
 import type {
   ActiveExecutionSummary,
+  AlarmCreatedEvent,
   AlarmSummary,
   DrawerState,
   FlowFilter,
@@ -169,6 +170,7 @@ export function AppStateProvider(props: { children: ReactNode }) {
     let cancelled = false;
     let unlistenStarted: (() => void) | undefined;
     let unlistenFinished: (() => void) | undefined;
+    let unlistenAlarmCreated: (() => void) | undefined;
 
     async function registerListeners() {
       unlistenStarted = await listen<FlowExecutionStartedEvent>(
@@ -209,6 +211,25 @@ export function AppStateProvider(props: { children: ReactNode }) {
           });
         },
       );
+
+      unlistenAlarmCreated = await listen<AlarmCreatedEvent>(
+        "alarm-created",
+        () => {
+          if (cancelled) {
+            return;
+          }
+
+          void listAlarms()
+            .then((persistedAlarms) => {
+              if (!cancelled) {
+                setAlarms(persistedAlarms);
+              }
+            })
+            .catch((error) => {
+              console.error("Failed to refresh alarms after alarm-created event", error);
+            });
+        },
+      );
     }
 
     void registerListeners();
@@ -217,6 +238,7 @@ export function AppStateProvider(props: { children: ReactNode }) {
       cancelled = true;
       unlistenStarted?.();
       unlistenFinished?.();
+      unlistenAlarmCreated?.();
     };
   }, [loadPersistedData]);
 

@@ -330,7 +330,8 @@ Current scope:
 - execution start and finish events are implemented
 - active execution cards in the dashboard are driven by event-backed state
 - `Projects` and `Runs` refresh after execution finishes by reloading persisted data in shared app state
-- alarm events are still planned for the later alarm phase
+- alarm-created events are emitted when runtime failures persist new alarms
+- the `Alarms` view refreshes through shared app-state subscription to alarm events
 
 Why this fits the app:
 - the app is desktop and long-running
@@ -370,6 +371,8 @@ Those remain in later phases.
 - The first failing prerequisite stops later prerequisites and skips the main flow.
 - Successful prerequisites can emit `KEY=value` lines on stdout, and those values are injected into later prerequisites and the main flow.
 - Dedicated prerequisite run history is still pending later work.
+- Runtime failures now persist alarm records locally.
+- Alarm creation emits a Tauri event so the frontend can refresh alarm state while the app is open.
 
 ---
 

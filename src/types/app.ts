@@ -106,6 +106,10 @@ export type FlowExecutionFinishedEvent = {
   flowId: string;
 };
 
+export type AlarmCreatedEvent = {
+  flowId: string;
+};
+
 export type DrawerState =
   | { type: null }
   | { type: "project"; mode: "create" | "edit"; projectId?: string }

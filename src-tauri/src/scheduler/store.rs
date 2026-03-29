@@ -214,6 +214,27 @@ pub(crate) fn persist_flow_run(
     Ok(())
 }
 
+pub(crate) fn persist_alarm(
+    db_path: &Path,
+    flow_id: &str,
+    severity: &str,
+    created_at: &str,
+    message: &str,
+) -> AppResult<()> {
+    let connection = open_connection(db_path)?;
+    let alarm_id = generate_id("alarm");
+
+    connection.execute(
+        r#"
+        INSERT INTO alarms (id, flow_id, severity, created_at, message)
+        VALUES (?1, ?2, ?3, ?4, ?5)
+        "#,
+        params![alarm_id, flow_id, severity, created_at, truncate_text(message)],
+    )?;
+
+    Ok(())
+}
+
 pub(crate) fn pause_disabled_flows(connection: &Connection) -> AppResult<()> {
     connection.execute(
         r#"

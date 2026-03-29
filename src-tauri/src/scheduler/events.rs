@@ -1,8 +1,8 @@
 use tauri::{AppHandle, Emitter};
 
 use super::types::{
-    ActiveExecutionPayload, DueFlow, FlowExecutionFinishedEvent, FlowExecutionStartedEvent,
-    PrerequisiteSpec,
+    ActiveExecutionPayload, AlarmCreatedEvent, DueFlow, FlowExecutionFinishedEvent,
+    FlowExecutionStartedEvent, PrerequisiteSpec,
 };
 
 pub(crate) fn emit_execution_started(
@@ -35,6 +35,14 @@ pub(crate) fn emit_execution_finished(app_handle: &AppHandle, flow_id: &str) {
     };
 
     let _ = app_handle.emit("flow-execution-finished", payload);
+}
+
+pub(crate) fn emit_alarm_created(app_handle: &AppHandle, flow_id: &str) {
+    let payload = AlarmCreatedEvent {
+        flow_id: flow_id.into(),
+    };
+
+    let _ = app_handle.emit("alarm-created", payload);
 }
 
 pub(crate) fn format_flow_note(flow: &DueFlow) -> String {
