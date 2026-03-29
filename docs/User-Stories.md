@@ -348,3 +348,5 @@ Acceptance notes:
 - scheduler continues running in background mode
 - minimizing the window does not stop active monitoring
 - local alarms still work while the app is minimized
+- closing the main window hides the app to the tray instead of stopping monitoring
+- tray menu provides `Show window` and `Quit` actions

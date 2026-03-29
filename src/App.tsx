@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { AlarmsView } from "./components/AlarmsView";
 import { DashboardView } from "./components/DashboardView";
@@ -38,6 +39,14 @@ function AppShell() {
   useEffect(() => {
     setMobileNavOpen(false);
   }, [section]);
+
+  async function hideToTray() {
+    try {
+      await getCurrentWindow().hide();
+    } catch (error) {
+      console.error("Failed to hide window to tray", error);
+    }
+  }
 
   return (
     <div className="h-screen overflow-hidden bg-[var(--app-bg)] text-slate-900 antialiased">
@@ -124,6 +133,15 @@ function AppShell() {
                   type="button"
                   className="rounded-2xl border border-[var(--border-strong)] bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[var(--accent-border)] hover:text-slate-950"
                   onClick={() => {
+                    void hideToTray();
+                  }}
+                >
+                  Hide to tray
+                </button>
+                <button
+                  type="button"
+                  className="rounded-2xl border border-[var(--border-strong)] bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[var(--accent-border)] hover:text-slate-950"
+                  onClick={() => {
                     if (section === "projects") {
                       setDrawer({ type: "project", mode: "create" });
                     }
@@ -132,7 +150,7 @@ function AppShell() {
                   {section === "projects" ? "New project" : "Prototype action"}
                 </button>
                 <div className="rounded-2xl border border-[var(--border-soft)] bg-white/80 px-4 py-2 text-sm text-slate-500">
-                  Last refreshed just now
+                  Close or hide keeps monitoring running in the tray
                 </div>
               </div>
             </div>

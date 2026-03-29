@@ -7,9 +7,60 @@ mod repositories;
 mod scheduler;
 mod state;
 
-use tauri::Manager;
+use tauri::menu::{Menu, MenuItem};
+#[cfg(not(target_os = "linux"))]
+use tauri::tray::{MouseButton, MouseButtonState, TrayIconEvent};
+use tauri::tray::TrayIconBuilder;
+use tauri::{Manager, WindowEvent};
 
 use state::AppState;
+
+const TRAY_SHOW_ID: &str = "tray-show-window";
+const TRAY_QUIT_ID: &str = "tray-quit-app";
+
+fn show_main_window(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
+}
+
+fn build_tray(app: &tauri::AppHandle) -> tauri::Result<()> {
+    let show_item = MenuItem::with_id(app, TRAY_SHOW_ID, "Show window", true, None::<&str>)?;
+    let quit_item = MenuItem::with_id(app, TRAY_QUIT_ID, "Quit", true, None::<&str>)?;
+    let menu = Menu::with_items(app, &[&show_item, &quit_item])?;
+
+    let builder = TrayIconBuilder::new()
+        .menu(&menu)
+        .show_menu_on_left_click(false)
+        .on_menu_event(|app, event| match event.id().as_ref() {
+            TRAY_SHOW_ID => show_main_window(app),
+            TRAY_QUIT_ID => app.exit(0),
+            _ => {}
+        });
+
+    #[cfg(not(target_os = "linux"))]
+    let builder = builder.on_tray_icon_event(|tray, event| {
+        if let TrayIconEvent::Click {
+            button: MouseButton::Left,
+            button_state: MouseButtonState::Down,
+            ..
+        } = event
+        {
+            show_main_window(&tray.app_handle());
+        }
+    });
+
+    let builder = if let Some(icon) = app.default_window_icon().cloned() {
+        builder.icon(icon)
+    } else {
+        builder
+    };
+
+    builder.build(app)?;
+    Ok(())
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -22,8 +73,19 @@ pub fn run() {
             scheduler::bootstrap_scheduler(&db_path)?;
             scheduler::start_scheduler(db_path.clone(), app.handle().clone());
             app.manage(AppState::new(db_path));
+            build_tray(app.handle())?;
 
             Ok(())
+        })
+        .on_window_event(|window, event| {
+            if window.label() != "main" {
+                return;
+            }
+
+            if let WindowEvent::CloseRequested { api, .. } = event {
+                api.prevent_close();
+                let _ = window.hide();
+            }
         })
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_opener::init())

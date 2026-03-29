@@ -44,6 +44,8 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - On Linux, runtime failures also play a local warning sound.
 - While the app is open, execution-related UI updates are planned to be driven by Tauri events from the Rust backend.
 - In the current UI, running flows are highlighted in the Projects view so execution state is visible without opening the dashboard.
+- Closing the main window now hides the app to the system tray instead of stopping monitoring.
+- The tray menu supports restoring the window and quitting the app explicitly.
 
 ---
 

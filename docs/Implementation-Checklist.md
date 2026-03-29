@@ -188,11 +188,12 @@ Goal:
 
 Checklist:
 
-- [ ] add tray support
-- [ ] keep scheduler active when the window is hidden
-- [ ] add tray actions for show window and quit
-- [ ] verify alarms still work in background mode
-- [ ] verify the app restores cleanly from tray state
+- [x] add tray support
+- [x] keep scheduler active when the window is hidden
+- [x] add tray actions for show window and quit
+- [x] verify alarms still work in background mode
+- [x] verify the app restores cleanly from tray state
+- [ ] add app auto-start on system startup
 
 Definition of done:
 

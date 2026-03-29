@@ -379,6 +379,8 @@ Those remain in later phases.
 - Alarm creation emits a Tauri event so the frontend can refresh alarm state while the app is open.
 - Runtime failures also trigger local desktop notifications through the Tauri notification plugin.
 - On Linux, runtime failures also trigger a warning sound through `paplay` using the system dialog-warning sound.
+- The desktop app now installs a tray icon with `Show window` and `Quit` actions.
+- Closing the main window is intercepted and converted into hide-to-tray behavior so the scheduler keeps running.
 
 ---
 
