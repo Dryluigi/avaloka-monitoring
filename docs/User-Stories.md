@@ -175,6 +175,18 @@ Acceptance notes:
 - a flow can have multiple prerequisites
 - prerequisites run in configured order
 - prerequisites are stored as part of flow configuration
+- a prerequisite can be disabled without deleting it
+
+### Disable Prerequisites
+
+As a user, I want to disable a prerequisite without deleting it so that I can temporarily skip a setup check while keeping its configuration.
+
+Acceptance notes:
+
+- user can disable a prerequisite from its edit form
+- disabled prerequisites remain visible in the project UI
+- disabled prerequisites are marked clearly as disabled
+- disabled prerequisites do not participate in execution
 
 ### Block Main Flow On Prerequisite Failure
 
@@ -218,9 +230,10 @@ As a user, I want to define project secrets so that sensitive values can be used
 Acceptance notes:
 
 - user can create secret values in a project
-- secrets are persisted securely for v1
+- secrets are persisted locally for v1
 - secrets are masked in the UI where appropriate
 - secrets are available to all flows in the project at runtime
+- stronger at-rest secret hardening is still a follow-up task
 
 ---
 

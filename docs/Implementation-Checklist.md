@@ -57,10 +57,10 @@ Checklist:
 - [x] add database initialization on app startup
 - [x] implement project CRUD commands
 - [x] implement flow CRUD commands
-- [ ] implement project variable CRUD commands
-- [ ] implement prerequisite CRUD commands
-- [x] expose data-loading commands for the frontend for projects and flows
-- [ ] replace frontend mock data with Tauri command calls for remaining domains
+- [x] implement project variable CRUD commands
+- [x] implement prerequisite CRUD commands
+- [x] expose data-loading commands for the frontend for projects, flows, variables, and prerequisites
+- [ ] replace frontend mock data with Tauri command calls for runs, alarms, and flow state
 - [ ] handle empty states using real persisted data
 
 Definition of done:

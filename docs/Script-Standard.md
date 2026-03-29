@@ -86,6 +86,7 @@ Rules:
 - secrets are injected at runtime but must not be exposed in logs or alarms
 - later prerequisites receive values emitted by earlier prerequisites
 - the main flow receives values emitted by all successful prerequisites
+- disabled prerequisites are skipped entirely
 
 ---
 

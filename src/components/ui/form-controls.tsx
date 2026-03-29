@@ -30,24 +30,36 @@ export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 
 export function ToggleGroup(props: {
   value: string;
-  options: { value: string; label: string }[];
+  options: {
+    value: string;
+    label: string;
+    description?: string;
+    tone?: "default" | "secret";
+  }[];
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="flex flex-wrap gap-2 rounded-xl border border-[var(--border-soft)] bg-slate-50 p-1">
+    <div className="grid gap-2 rounded-xl border border-[var(--border-soft)] bg-slate-50 p-1 sm:grid-cols-2">
       {props.options.map((option) => (
         <button
           key={option.value}
           type="button"
           onClick={() => props.onChange(option.value)}
           className={[
-            "rounded-xl px-3 py-2 text-sm font-medium transition",
+            "rounded-xl border px-3 py-3 text-left transition",
             props.value === option.value
-              ? "bg-white text-slate-950 shadow-[var(--shadow-soft)]"
-              : "text-slate-500 hover:text-slate-900",
+              ? option.tone === "secret"
+                ? "border-rose-200 bg-rose-50 text-rose-900"
+                : "border-[var(--accent-border)] bg-white text-slate-950"
+              : "border-transparent text-slate-500 hover:border-[var(--border-soft)] hover:bg-white hover:text-slate-900",
           ].join(" ")}
         >
-          {option.label}
+          <div className="text-sm font-semibold">{option.label}</div>
+          {option.description ? (
+            <div className="mt-1 text-xs leading-5 text-slate-500">
+              {option.description}
+            </div>
+          ) : null}
         </button>
       ))}
     </div>

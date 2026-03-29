@@ -49,6 +49,7 @@ export type PrerequisiteSummary = {
   name: string;
   executablePath: string;
   args: string[];
+  enabled: boolean;
   status: "ready" | "success" | "failed";
 };
 
@@ -130,5 +131,6 @@ export type PrerequisiteDraft = {
   name: string;
   executablePath: string;
   args: string;
+  enabled: boolean;
   status: "ready" | "success" | "failed";
 };

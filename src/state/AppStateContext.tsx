@@ -9,12 +9,12 @@ import {
 
 import {
   MOCK_FLOWS,
-  MOCK_PREREQUISITES,
-  MOCK_VARIABLES,
 } from "../data/mock-data";
 import { withProjectCollectionCounts } from "../lib/project-summary";
 import { listFlows } from "../services/flow-api";
+import { listPrerequisites } from "../services/prerequisite-api";
 import { listProjects } from "../services/project-api";
+import { listProjectVariables } from "../services/project-variable-api";
 import type {
   DrawerState,
   FlowFilter,
@@ -48,8 +48,8 @@ const AppStateContext = createContext<AppStateContextValue | null>(null);
 export function AppStateProvider(props: { children: ReactNode }) {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
   const [flows, setFlows] = useState<FlowSummary[]>([]);
-  const [variables, setVariables] = useState(MOCK_VARIABLES);
-  const [prerequisites, setPrerequisites] = useState(MOCK_PREREQUISITES);
+  const [variables, setVariables] = useState<ProjectVariable[]>([]);
+  const [prerequisites, setPrerequisites] = useState<PrerequisiteSummary[]>([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedFlowId, setSelectedFlowId] = useState(MOCK_FLOWS[0]?.id ?? "");
   const [flowFilter, setFlowFilter] = useState<FlowFilter>("all");
@@ -60,18 +60,27 @@ export function AppStateProvider(props: { children: ReactNode }) {
 
     async function loadPersistedData() {
       try {
-        const [persistedProjects, persistedFlows] = await Promise.all([
+        const [
+          persistedProjects,
+          persistedFlows,
+          persistedVariables,
+          persistedPrerequisites,
+        ] = await Promise.all([
           listProjects(),
           listFlows(),
+          listProjectVariables(),
+          listPrerequisites(),
         ]);
 
         if (!ignore) {
           setFlows(persistedFlows);
+          setVariables(persistedVariables);
+          setPrerequisites(persistedPrerequisites);
           setProjects(
             withProjectCollectionCounts(
               persistedProjects,
               persistedFlows,
-              MOCK_VARIABLES,
+              persistedVariables,
             ),
           );
         }

@@ -3,7 +3,17 @@ import { useEffect, useState } from "react";
 import { getDrawerTitle } from "../lib/config";
 import { withProjectCounts } from "../lib/project-summary";
 import { createFlow, deleteFlow, updateFlow } from "../services/flow-api";
+import {
+  createPrerequisite,
+  deletePrerequisite,
+  updatePrerequisite,
+} from "../services/prerequisite-api";
 import { createProject, updateProject } from "../services/project-api";
+import {
+  createProjectVariable,
+  deleteProjectVariable,
+  updateProjectVariable,
+} from "../services/project-variable-api";
 import { useAppState } from "../state/AppStateContext";
 import type {
   FlowDraft,
@@ -75,6 +85,7 @@ export function Drawer() {
       name: "",
       executablePath: "",
       args: "",
+      enabled: true,
       status: "ready",
     },
   );
@@ -107,6 +118,7 @@ export function Drawer() {
         name: prerequisiteValue?.name ?? "",
         executablePath: prerequisiteValue?.executablePath ?? "",
         args: prerequisiteValue?.args.join(" ") ?? "",
+        enabled: prerequisiteValue?.enabled ?? true,
         status: prerequisiteValue?.status ?? "ready",
       });
     }
@@ -456,6 +468,7 @@ export function Drawer() {
               </Field>
               <Field label="Value">
                 <Input
+                  type={variableDraft.isSecret ? "password" : "text"}
                   value={variableDraft.value}
                   onChange={(event) =>
                     setVariableDraft((current) => ({
@@ -474,8 +487,17 @@ export function Drawer() {
                 <ToggleGroup
                   value={variableDraft.isSecret ? "secret" : "plain"}
                   options={[
-                    { value: "plain", label: "Plain" },
-                    { value: "secret", label: "Secret" },
+                    {
+                      value: "plain",
+                      label: "Plain",
+                      description: "Visible in the UI and returned as a normal value.",
+                    },
+                    {
+                      value: "secret",
+                      label: "Secret",
+                      description: "Masked in the UI and intended for sensitive runtime use.",
+                      tone: "secret",
+                    },
                   ]}
                   onChange={(value) =>
                     setVariableDraft((current) => ({
@@ -484,58 +506,100 @@ export function Drawer() {
                     }))
                   }
                 />
+                <p className="mt-2 text-xs leading-5 text-slate-500">
+                  Secret values are masked in the UI. Stronger at-rest secret
+                  hardening is still pending.
+                </p>
               </Field>
               <DrawerActions
                 onCancel={() => setDrawer({ type: null })}
                 onSave={() => {
-                  if (drawer.mode === "create") {
-                    const nextVariable = {
-                      id: `var-${Date.now()}`,
-                      projectId: drawer.projectId,
-                      key: variableDraft.key,
-                      value: variableDraft.isSecret
-                        ? "••••••••••••"
-                        : variableDraft.value,
-                      isSecret: variableDraft.isSecret,
-                    };
+                  void (async () => {
+                    try {
+                      if (drawer.mode === "create") {
+                        const createdVariable = await createProjectVariable(
+                          drawer.projectId,
+                          variableDraft,
+                        );
+                        const nextVariables = [createdVariable, ...variables];
 
-                    setVariables((current) => [nextVariable, ...current]);
-                    setProjects((current) =>
-                      current.map((project) =>
-                        project.id === drawer.projectId
-                          ? {
-                              ...project,
-                              variableCount:
-                                project.variableCount +
-                                (variableDraft.isSecret ? 0 : 1),
-                              secretCount:
-                                project.secretCount +
-                                (variableDraft.isSecret ? 1 : 0),
-                            }
-                          : project,
-                      ),
-                    );
-                  } else if (drawer.variableId) {
-                    setVariables((current) =>
-                      current.map((variable) =>
-                        variable.id === drawer.variableId
-                          ? {
-                              ...variable,
-                              key: variableDraft.key,
-                              value: variableDraft.isSecret
-                                ? "••••••••••••"
-                                : variableDraft.value,
-                              isSecret: variableDraft.isSecret,
-                            }
-                          : variable,
-                      ),
-                    );
-                  }
+                        setVariables(nextVariables);
+                        setProjects((current) =>
+                          current.map((project) =>
+                            project.id === drawer.projectId
+                              ? withProjectCounts(project, flows, nextVariables)
+                              : project,
+                          ),
+                        );
+                      } else if (drawer.variableId) {
+                        const updatedVariable = await updateProjectVariable(
+                          drawer.variableId,
+                          drawer.projectId,
+                          variableDraft,
+                        );
+                        const nextVariables = variables.map((variable) =>
+                          variable.id === drawer.variableId
+                            ? updatedVariable
+                            : variable,
+                        );
 
-                  setDrawer({ type: null });
+                        setVariables(nextVariables);
+                        setProjects((current) =>
+                          current.map((project) =>
+                            project.id === drawer.projectId
+                              ? withProjectCounts(project, flows, nextVariables)
+                              : project,
+                          ),
+                        );
+                      }
+
+                      setDrawer({ type: null });
+                    } catch (error) {
+                      console.error("Failed to persist project variable", error);
+                    }
+                  })();
                 }}
                 saveLabel={
                   drawer.mode === "create" ? "Create variable" : "Save variable"
+                }
+                onDestructive={
+                  drawer.mode === "edit" && drawer.variableId
+                    ? () => {
+                        void (async () => {
+                          try {
+                            const variableId = drawer.variableId;
+
+                            if (!variableId) {
+                              return;
+                            }
+
+                            await deleteProjectVariable(variableId);
+
+                            const nextVariables = variables.filter(
+                              (variable) => variable.id !== variableId,
+                            );
+
+                            setVariables(nextVariables);
+                            setProjects((current) =>
+                              current.map((project) =>
+                                project.id === drawer.projectId
+                                  ? withProjectCounts(project, flows, nextVariables)
+                                  : project,
+                              ),
+                            );
+                            setDrawer({ type: null });
+                          } catch (error) {
+                            console.error(
+                              "Failed to delete project variable",
+                              error,
+                            );
+                          }
+                        })();
+                      }
+                    : undefined
+                }
+                destructiveLabel={
+                  drawer.mode === "edit" ? "Delete variable" : undefined
                 }
               />
             </>
@@ -579,18 +643,25 @@ export function Drawer() {
                   placeholder="scripts/check_vpn.sh"
                 />
               </Field>
-              <Field label="Preview status">
+              <Field label="Status">
                 <ToggleGroup
-                  value={prerequisiteDraft.status}
+                  value={prerequisiteDraft.enabled ? "enabled" : "disabled"}
                   options={[
-                    { value: "ready", label: "Ready" },
-                    { value: "success", label: "Success" },
-                    { value: "failed", label: "Failed" },
+                    {
+                      value: "enabled",
+                      label: "Enabled",
+                      description: "This prerequisite will run before the flow.",
+                    },
+                    {
+                      value: "disabled",
+                      label: "Disabled",
+                      description: "This prerequisite is kept in config but skipped.",
+                    },
                   ]}
                   onChange={(value) =>
                     setPrerequisiteDraft((current) => ({
                       ...current,
-                      status: value as PrerequisiteDraft["status"],
+                      enabled: value === "enabled",
                     }))
                   }
                 />
@@ -598,47 +669,74 @@ export function Drawer() {
               <DrawerActions
                 onCancel={() => setDrawer({ type: null })}
                 onSave={() => {
-                  const parsedArgs = prerequisiteDraft.args
-                    .split(" ")
-                    .map((value) => value.trim())
-                    .filter(Boolean);
+                  void (async () => {
+                    try {
+                      if (drawer.mode === "create") {
+                        const createdPrerequisite = await createPrerequisite(
+                          drawer.flowId,
+                          prerequisiteDraft,
+                        );
 
-                  if (drawer.mode === "create") {
-                    const nextPrerequisite = {
-                      id: `pre-${Date.now()}`,
-                      flowId: drawer.flowId,
-                      name: prerequisiteDraft.name || "New prerequisite",
-                      executablePath: prerequisiteDraft.executablePath,
-                      args: parsedArgs,
-                      status: prerequisiteDraft.status,
-                    };
+                        setPrerequisites((current) => [
+                          createdPrerequisite,
+                          ...current,
+                        ]);
+                      } else if (drawer.prerequisiteId) {
+                        const updatedPrerequisite = await updatePrerequisite(
+                          drawer.prerequisiteId,
+                          drawer.flowId,
+                          prerequisiteDraft,
+                        );
 
-                    setPrerequisites((current) => [
-                      nextPrerequisite,
-                      ...current,
-                    ]);
-                  } else if (drawer.prerequisiteId) {
-                    setPrerequisites((current) =>
-                      current.map((prerequisite) =>
-                        prerequisite.id === drawer.prerequisiteId
-                          ? {
-                              ...prerequisite,
-                              name: prerequisiteDraft.name,
-                              executablePath: prerequisiteDraft.executablePath,
-                              args: parsedArgs,
-                              status: prerequisiteDraft.status,
-                            }
-                          : prerequisite,
-                      ),
-                    );
-                  }
+                        setPrerequisites((current) =>
+                          current.map((prerequisite) =>
+                            prerequisite.id === drawer.prerequisiteId
+                              ? updatedPrerequisite
+                              : prerequisite,
+                          ),
+                        );
+                      }
 
-                  setDrawer({ type: null });
+                      setDrawer({ type: null });
+                    } catch (error) {
+                      console.error("Failed to persist prerequisite", error);
+                    }
+                  })();
                 }}
                 saveLabel={
                   drawer.mode === "create"
                     ? "Create prerequisite"
                     : "Save prerequisite"
+                }
+                onDestructive={
+                  drawer.mode === "edit" && drawer.prerequisiteId
+                    ? () => {
+                        void (async () => {
+                          try {
+                            const prerequisiteId = drawer.prerequisiteId;
+
+                            if (!prerequisiteId) {
+                              return;
+                            }
+
+                            await deletePrerequisite(prerequisiteId);
+
+                            setPrerequisites((current) =>
+                              current.filter(
+                                (prerequisite) =>
+                                  prerequisite.id !== prerequisiteId,
+                              ),
+                            );
+                            setDrawer({ type: null });
+                          } catch (error) {
+                            console.error("Failed to delete prerequisite", error);
+                          }
+                        })();
+                      }
+                    : undefined
+                }
+                destructiveLabel={
+                  drawer.mode === "edit" ? "Delete prerequisite" : undefined
                 }
               />
             </>

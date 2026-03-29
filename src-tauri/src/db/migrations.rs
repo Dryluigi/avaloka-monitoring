@@ -50,6 +50,7 @@ pub fn run_migrations(connection: &Connection) -> AppResult<()> {
             executable_path TEXT NOT NULL,
             args_json TEXT NOT NULL DEFAULT '[]',
             order_index INTEGER NOT NULL DEFAULT 0,
+            enabled INTEGER NOT NULL DEFAULT 1,
             status TEXT NOT NULL DEFAULT 'ready',
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -95,7 +96,32 @@ pub fn run_migrations(connection: &Connection) -> AppResult<()> {
         "#,
     )?;
 
+    ensure_prerequisite_enabled_column(connection)?;
+
     seed_default_projects(connection)?;
+
+    Ok(())
+}
+
+fn ensure_prerequisite_enabled_column(connection: &Connection) -> AppResult<()> {
+    let mut statement = connection.prepare("PRAGMA table_info(prerequisites)")?;
+    let rows = statement.query_map([], |row| row.get::<_, String>(1))?;
+
+    let mut has_enabled_column = false;
+
+    for row in rows {
+        if row? == "enabled" {
+            has_enabled_column = true;
+            break;
+        }
+    }
+
+    if !has_enabled_column {
+        connection.execute(
+            "ALTER TABLE prerequisites ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1",
+            [],
+        )?;
+    }
 
     Ok(())
 }

@@ -480,6 +480,7 @@ export const MOCK_PREREQUISITES: PrerequisiteSummary[] = [
     name: "Check API DNS",
     executablePath: "/usr/bin/bash",
     args: ["scripts/check_dns.sh"],
+    enabled: true,
     status: "success",
   },
   {
@@ -488,6 +489,7 @@ export const MOCK_PREREQUISITES: PrerequisiteSummary[] = [
     name: "Fetch short-lived session",
     executablePath: "/usr/bin/python3",
     args: ["scripts/fetch_session.py"],
+    enabled: true,
     status: "failed",
   },
   {
@@ -496,6 +498,7 @@ export const MOCK_PREREQUISITES: PrerequisiteSummary[] = [
     name: "Verify VPN route",
     executablePath: "/usr/bin/bash",
     args: ["scripts/check_vpn.sh"],
+    enabled: true,
     status: "success",
   },
   {
@@ -504,6 +507,7 @@ export const MOCK_PREREQUISITES: PrerequisiteSummary[] = [
     name: "Resolve remote backup target",
     executablePath: "/usr/bin/python3",
     args: ["scripts/resolve_target.py"],
+    enabled: true,
     status: "ready",
   },
   {
@@ -512,6 +516,7 @@ export const MOCK_PREREQUISITES: PrerequisiteSummary[] = [
     name: "Warm payment sandbox",
     executablePath: "/usr/bin/node",
     args: ["scripts/warm_payment_sandbox.mjs"],
+    enabled: true,
     status: "success",
   },
   {
@@ -520,6 +525,7 @@ export const MOCK_PREREQUISITES: PrerequisiteSummary[] = [
     name: "Fetch invoice window",
     executablePath: "/usr/bin/python3",
     args: ["scripts/fetch_invoice_window.py"],
+    enabled: true,
     status: "success",
   },
   {
@@ -528,6 +534,7 @@ export const MOCK_PREREQUISITES: PrerequisiteSummary[] = [
     name: "Verify queue endpoint",
     executablePath: "/usr/bin/bash",
     args: ["scripts/check_queue_endpoint.sh"],
+    enabled: true,
     status: "success",
   },
   {
@@ -536,6 +543,7 @@ export const MOCK_PREREQUISITES: PrerequisiteSummary[] = [
     name: "Resolve SMS provider route",
     executablePath: "/usr/bin/bash",
     args: ["scripts/resolve_sms_route.sh"],
+    enabled: false,
     status: "ready",
   },
 ];

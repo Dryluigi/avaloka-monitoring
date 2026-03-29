@@ -157,6 +157,8 @@ Files:
 - `src/lib/project-summary.ts`
 - `src/services/project-api.ts`
 - `src/services/flow-api.ts`
+- `src/services/project-variable-api.ts`
+- `src/services/prerequisite-api.ts`
 - `src/types/app.ts`
 
 Responsibility:
@@ -166,7 +168,12 @@ Responsibility:
 - provide frontend service wrappers for Tauri commands
 - provide mapping helpers for UI-facing summaries
 
-This separation matters because it lets us later replace the source of truth without rewriting the UI structure.
+At the current stage:
+- projects, flows, project variables, and prerequisites are loaded through Tauri service wrappers
+- runs, alarms, and flow-state detail are still frontend mock-backed
+- project secrets are currently masked in frontend responses, but not yet hardened with stronger at-rest secret storage
+
+This separation matters because it lets us replace the remaining mock-backed domains without rewriting the UI structure.
 
 ---
 

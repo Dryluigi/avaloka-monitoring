@@ -13,6 +13,25 @@ import { CardSection } from "./ui/layout";
 import { Metric, MetricPanel, StatCard } from "./ui/metrics";
 import { EmptyState, SmallEmptyState, StatusPill } from "./ui/status";
 
+function getPrerequisiteStatusClassName(
+  status: "ready" | "success" | "failed",
+  enabled: boolean,
+) {
+  if (!enabled) {
+    return "border-slate-200 bg-slate-100 text-slate-600";
+  }
+
+  if (status === "success") {
+    return "border-emerald-200 bg-emerald-50 text-emerald-700";
+  }
+
+  if (status === "failed") {
+    return "border-rose-200 bg-rose-50 text-rose-700";
+  }
+
+  return "border-sky-200 bg-sky-50 text-sky-700";
+}
+
 export function ProjectsView() {
   const {
     projects,
@@ -364,14 +383,13 @@ export function ProjectsView() {
               <CardSection
                 title="Project variables"
                 description="Shared values and masked secrets available to every flow in this project."
-                actionLabel="Edit variables"
+                actionLabel="Add variable"
                 onAction={() =>
                   selectedProject &&
                   setDrawer({
                     type: "variable",
-                    mode: selectedProjectVariables[0] ? "edit" : "create",
+                    mode: "create",
                     projectId: selectedProject.id,
-                    variableId: selectedProjectVariables[0]?.id,
                   })
                 }
               >
@@ -380,9 +398,19 @@ export function ProjectsView() {
                 ) : (
                   <div className="space-y-3">
                     {selectedProjectVariables.map((variable) => (
-                      <div
+                      <button
                         key={variable.id}
-                        className="flex items-center justify-between rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3"
+                        type="button"
+                        onClick={() =>
+                          selectedProject &&
+                          setDrawer({
+                            type: "variable",
+                            mode: "edit",
+                            projectId: selectedProject.id,
+                            variableId: variable.id,
+                          })
+                        }
+                        className="flex w-full items-center justify-between rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3 text-left transition hover:border-[var(--border-strong)]"
                       >
                         <div>
                           <div className="text-sm font-medium text-slate-900">
@@ -397,7 +425,7 @@ export function ProjectsView() {
                         <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
                           {variable.isSecret ? "Masked" : "Plain"}
                         </span>
-                      </div>
+                      </button>
                     ))}
                   </div>
                 )}
@@ -510,15 +538,14 @@ export function ProjectsView() {
             <CardSection
               title="Prerequisites"
               description="Ordered checks and setup steps before the main flow command runs."
-              actionLabel={selectedFlow ? "Edit prerequisites" : undefined}
+              actionLabel={selectedFlow ? "Add prerequisite" : undefined}
               onAction={
                 selectedFlow
                   ? () =>
                       setDrawer({
                         type: "prerequisite",
-                        mode: selectedFlowPrerequisites[0] ? "edit" : "create",
+                        mode: "create",
                         flowId: selectedFlow.id,
-                        prerequisiteId: selectedFlowPrerequisites[0]?.id,
                       })
                   : undefined
               }
@@ -530,9 +557,19 @@ export function ProjectsView() {
               ) : (
                 <div className="space-y-3">
                   {selectedFlowPrerequisites.map((prerequisite) => (
-                    <div
+                    <button
                       key={prerequisite.id}
-                      className="rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3"
+                      type="button"
+                      onClick={() =>
+                        selectedFlow &&
+                        setDrawer({
+                          type: "prerequisite",
+                          mode: "edit",
+                          flowId: selectedFlow.id,
+                          prerequisiteId: prerequisite.id,
+                        })
+                      }
+                      className="w-full rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3 text-left transition hover:border-[var(--border-strong)]"
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
@@ -544,11 +581,21 @@ export function ProjectsView() {
                             {prerequisite.args.join(" ")}
                           </div>
                         </div>
-                        <span className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-medium text-slate-500">
-                          {prerequisite.status}
+                        <span
+                          className={[
+                            "rounded-full border px-2 py-1 text-[11px] font-medium",
+                            getPrerequisiteStatusClassName(
+                              prerequisite.status,
+                              prerequisite.enabled,
+                            ),
+                          ].join(" ")}
+                        >
+                          {prerequisite.enabled
+                            ? prerequisite.status
+                            : "disabled"}
                         </span>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

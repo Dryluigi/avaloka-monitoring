@@ -30,7 +30,9 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - A `Flow` is the independently scheduled execution unit.
 - Flows use external commands, not inline scripts, in v1.
 - Project variables and secrets are injected into scripts through environment variables.
+- In the current implementation, secret values are masked in the UI, while stronger at-rest secret hardening is still pending.
 - Prerequisites run before the main flow and can emit `KEY=value` outputs for later steps.
+- Prerequisites can also be disabled without being deleted.
 - Different flows may run concurrently, but the same flow must not overlap with itself.
 - Failures trigger local desktop alarms, are recorded in local history, and include a human-readable failure message.
 
