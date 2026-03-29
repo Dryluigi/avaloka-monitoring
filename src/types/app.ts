@@ -114,7 +114,7 @@ export type ProjectDraft = {
 export type FlowDraft = {
   name: string;
   enabled: boolean;
-  intervalLabel: string;
+  intervalSeconds: string;
   executablePath: string;
   args: string;
   workingDirectory: string;

@@ -27,6 +27,7 @@ export function Metric(props: {
   label: string;
   value: string;
   tone?: "blue" | "teal" | "rose" | "amber" | "slate";
+  valueClassName?: string;
 }) {
   const tone = props.tone ?? "slate";
   const toneClass =
@@ -43,7 +44,16 @@ export function Metric(props: {
   return (
     <div className={`rounded-xl border px-3 py-2 ${toneClass}`}>
       <div className="text-[11px] uppercase tracking-[0.14em] text-slate-400">{props.label}</div>
-      <div className="mt-1 text-sm font-medium text-slate-800">{props.value}</div>
+      <div
+        className={[
+          "mt-1 text-sm font-medium text-slate-800",
+          props.valueClassName,
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {props.value}
+      </div>
     </div>
   );
 }

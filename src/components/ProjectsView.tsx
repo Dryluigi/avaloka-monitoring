@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from "react";
 
 import { STATUS_META } from "../lib/config";
+import { formatSecondsBreakdown, parseIntervalLabelToSeconds } from "../lib/time";
 import {
   MOCK_ALARMS,
   MOCK_FLOW_STATE,
@@ -30,6 +31,16 @@ function getPrerequisiteStatusClassName(
   }
 
   return "border-sky-200 bg-sky-50 text-sky-700";
+}
+
+function getReadableIntervalLabel(intervalLabel: string) {
+  const seconds = parseIntervalLabelToSeconds(intervalLabel);
+
+  if (!seconds) {
+    return intervalLabel;
+  }
+
+  return formatSecondsBreakdown(seconds);
 }
 
 export function ProjectsView() {
@@ -380,8 +391,12 @@ export function ProjectsView() {
                             {flow.executablePath} {flow.args.join(" ")}
                           </div>
                         </div>
-                        <div className="grid gap-2 text-xs text-slate-500 sm:grid-cols-3">
-                          <Metric label="Interval" value={flow.intervalLabel} />
+                        <div className="grid gap-2 text-xs text-slate-500 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)]">
+                          <Metric
+                            label="Interval"
+                            value={getReadableIntervalLabel(flow.intervalLabel)}
+                            valueClassName="text-xs leading-5 text-slate-700"
+                          />
                           <Metric label="Last run" value={flow.lastRunAt} />
                           <Metric label="Next run" value={flow.nextRunAt} />
                         </div>

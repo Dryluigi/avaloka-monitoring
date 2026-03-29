@@ -1,12 +1,47 @@
 import { useEffect, useState } from "react";
 
 import { withProjectCounts } from "../../lib/project-summary";
+import { formatSecondsBreakdown } from "../../lib/time";
 import { createFlow, deleteFlow, updateFlow } from "../../services/flow-api";
 import { useAppState } from "../../state/AppStateContext";
 import type { FlowDraft } from "../../types/app";
 import { DrawerActions } from "../ui/buttons";
 import { Input, ToggleGroup } from "../ui/form-controls";
 import { Field } from "../ui/layout";
+
+function intervalLabelToSeconds(intervalLabel: string) {
+  const normalized = intervalLabel.trim().toLowerCase();
+  const match = normalized.match(
+    /every\s+(\d+)\s*(sec|secs|second|seconds|min|mins|minute|minutes|hr|hrs|hour|hours)/,
+  );
+
+  if (!match) {
+    return "900";
+  }
+
+  const value = Number(match[1]);
+  const unit = match[2];
+
+  if (unit.startsWith("hr") || unit.startsWith("hour")) {
+    return String(value * 3600);
+  }
+
+  if (unit.startsWith("min") || unit.startsWith("minute")) {
+    return String(value * 60);
+  }
+
+  return String(value);
+}
+
+function formatReadableInterval(intervalSeconds: string) {
+  const parsed = Number(intervalSeconds.trim());
+
+  if (!Number.isFinite(parsed) || parsed <= 0) {
+    return "Enter a positive number of seconds.";
+  }
+
+  return `Runs every ${formatSecondsBreakdown(parsed)}.`;
+}
 
 export function FlowDrawerForm() {
   const {
@@ -31,7 +66,7 @@ export function FlowDrawerForm() {
   const [draft, setDraft] = useState<FlowDraft>({
     name: "",
     enabled: true,
-    intervalLabel: "Every 15 min",
+    intervalSeconds: "900",
     executablePath: "",
     args: "",
     workingDirectory: "",
@@ -42,7 +77,9 @@ export function FlowDrawerForm() {
     setDraft({
       name: flowValue?.name ?? "",
       enabled: flowValue?.enabled ?? true,
-      intervalLabel: flowValue?.intervalLabel ?? "Every 15 min",
+      intervalSeconds: flowValue
+        ? intervalLabelToSeconds(flowValue.intervalLabel)
+        : "900",
       executablePath: flowValue?.executablePath ?? "",
       args: flowValue?.args.join(" ") ?? "",
       workingDirectory: flowValue?.workingDirectory ?? "",
@@ -65,17 +102,23 @@ export function FlowDrawerForm() {
         />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Interval">
+        <Field label="Interval (seconds)">
           <Input
-            value={draft.intervalLabel}
+            type="number"
+            min="1"
+            step="1"
+            value={draft.intervalSeconds}
             onChange={(event) =>
               setDraft((current) => ({
                 ...current,
-                intervalLabel: event.target.value,
+                intervalSeconds: event.target.value,
               }))
             }
-            placeholder="Every 15 min"
+            placeholder="900"
           />
+          <p className="mt-2 text-xs leading-5 text-slate-500">
+            {formatReadableInterval(draft.intervalSeconds)}
+          </p>
         </Field>
         <Field label="Timeout (seconds)">
           <Input

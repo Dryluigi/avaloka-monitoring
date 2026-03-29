@@ -2,26 +2,14 @@ import { invoke } from "@tauri-apps/api/core";
 
 import type { FlowDraft, FlowSummary } from "../types/app";
 
-function parseIntervalSeconds(intervalLabel: string) {
-  const normalized = intervalLabel.trim().toLowerCase();
-  const match = normalized.match(/every\s+(\d+)\s*(sec|secs|second|seconds|min|mins|minute|minutes|hr|hrs|hour|hours)/);
+function parseIntervalSeconds(intervalSeconds: string) {
+  const parsed = Number(intervalSeconds.trim());
 
-  if (!match) {
+  if (!Number.isFinite(parsed) || parsed <= 0) {
     return 900;
   }
 
-  const value = Number(match[1]);
-  const unit = match[2];
-
-  if (unit.startsWith("hr") || unit.startsWith("hour")) {
-    return value * 3600;
-  }
-
-  if (unit.startsWith("min") || unit.startsWith("minute")) {
-    return value * 60;
-  }
-
-  return value;
+  return Math.floor(parsed);
 }
 
 function parseArgs(argsText: string) {
@@ -41,7 +29,7 @@ export function createFlow(projectId: string, input: FlowDraft) {
       projectId,
       name: input.name || "Untitled flow",
       enabled: input.enabled,
-      intervalSeconds: parseIntervalSeconds(input.intervalLabel),
+      intervalSeconds: parseIntervalSeconds(input.intervalSeconds),
       executablePath: input.executablePath,
       args: parseArgs(input.args),
       workingDirectory: input.workingDirectory,
@@ -57,7 +45,7 @@ export function updateFlow(id: string, projectId: string, input: FlowDraft) {
       projectId,
       name: input.name,
       enabled: input.enabled,
-      intervalSeconds: parseIntervalSeconds(input.intervalLabel),
+      intervalSeconds: parseIntervalSeconds(input.intervalSeconds),
       executablePath: input.executablePath,
       args: parseArgs(input.args),
       workingDirectory: input.workingDirectory,
