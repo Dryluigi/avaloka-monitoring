@@ -20,7 +20,7 @@ pub fn run() {
 
             db::initialize_database(&db_path)?;
             scheduler::bootstrap_scheduler(&db_path)?;
-            scheduler::start_scheduler(db_path.clone());
+            scheduler::start_scheduler(db_path.clone(), app.handle().clone());
             app.manage(AppState::new(db_path));
 
             Ok(())

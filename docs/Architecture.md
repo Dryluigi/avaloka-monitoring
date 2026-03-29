@@ -176,9 +176,9 @@ Responsibility:
 
 At the current stage:
 - projects, flows, project variables, prerequisites, runs, alarms, and flow-state detail are loaded through Tauri service wrappers
-- currently executing dashboard cards are still mock-backed until scheduler/runtime work lands
+- the dashboard `currently executing` section is fed from Tauri execution lifecycle events
 - project secrets are currently masked in frontend responses, but not yet hardened with stronger at-rest secret storage
-- real-time UI updates are planned to use Tauri events as the primary mechanism instead of frontend polling
+- real-time execution UI updates use Tauri events as the primary mechanism instead of frontend polling
 - flow execution already injects project variables and secrets into the runtime environment for main flow commands
 
 This separation matters because it lets us replace the remaining mock-backed domains without rewriting the UI structure.
@@ -302,18 +302,24 @@ out of `App.tsx`.
 That would make the shell layer as modular as the page layer already is.
 
 ### 4. Use Tauri events for live updates
-For live execution feedback, the planned primary mechanism is Tauri events rather than frontend polling.
+For live execution feedback, the primary mechanism is Tauri events rather than frontend polling.
 
-Planned event examples:
+Event examples in this architecture:
 - `flow-execution-started`
 - `flow-execution-finished`
 - `alarm-created`
 
-Planned wiring:
+Current and planned wiring:
 - the Rust backend emits events when execution state changes
 - `src/state/AppStateContext.tsx` subscribes to those events once
 - shared state is updated in response to those events
 - `DashboardView`, `ProjectsView`, `RunsView`, and `AlarmsView` re-render from shared state changes
+
+Current scope:
+- execution start and finish events are implemented
+- active execution cards in the dashboard are driven by event-backed state
+- `Projects` and `Runs` refresh after execution finishes by reloading persisted data in shared app state
+- alarm events are still planned for the later alarm phase
 
 Why this fits the app:
 - the app is desktop and long-running

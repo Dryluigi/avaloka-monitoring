@@ -88,12 +88,11 @@ Checklist:
 - [x] capture stdout, stderr, exit code, and timestamps
 - [x] store flow run history after execution
 - [x] update the frontend with last-run and next-run data
-- [ ] replace mock `currently executing` dashboard data with real runtime execution state
-- [ ] implement Tauri event emission for flow execution lifecycle updates
-- [ ] replace mock `currently executing` dashboard data with Tauri event-backed runtime execution state
-- [ ] refresh the Projects view automatically while flow execution updates are happening
-- [ ] refresh the Runs view automatically when new run records are created
-- [ ] subscribe to Tauri execution events in the frontend shared app state
+- [x] implement Tauri event emission for flow execution lifecycle updates
+- [x] replace mock `currently executing` dashboard data with Tauri event-backed runtime execution state
+- [x] refresh the Projects view automatically while flow execution updates are happening
+- [x] refresh the Runs view automatically when new run records are created
+- [x] subscribe to Tauri execution events in the frontend shared app state
 
 Definition of done:
 

@@ -6,6 +6,8 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 use rusqlite::{params, Connection};
+use serde::Serialize;
+use tauri::{AppHandle, Emitter};
 
 use crate::db::connection::open_connection;
 use crate::errors::{AppError, AppResult};
@@ -14,11 +16,39 @@ use crate::errors::{AppError, AppResult};
 struct DueFlow {
     id: String,
     project_id: String,
+    project_name: String,
+    name: String,
     interval_seconds: i64,
     executable_path: String,
     args: Vec<String>,
     working_directory: String,
     timeout_seconds: i64,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct ActiveExecutionPayload {
+    id: String,
+    flow_id: String,
+    flow_name: String,
+    project_id: String,
+    project_name: String,
+    stage: String,
+    started_at: String,
+    elapsed_label: String,
+    note: String,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FlowExecutionStartedEvent {
+    execution: ActiveExecutionPayload,
+}
+
+#[derive(Clone, Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct FlowExecutionFinishedEvent {
+    flow_id: String,
 }
 
 pub fn bootstrap_scheduler(db_path: &Path) -> AppResult<()> {
@@ -30,11 +60,13 @@ pub fn bootstrap_scheduler(db_path: &Path) -> AppResult<()> {
     Ok(())
 }
 
-pub fn start_scheduler(db_path: PathBuf) {
+pub fn start_scheduler(db_path: PathBuf, app_handle: AppHandle) {
     let active_flows = Arc::new(Mutex::new(HashSet::<String>::new()));
 
     thread::spawn(move || loop {
-        if let Err(error) = scan_and_run_due_flows(&db_path, Arc::clone(&active_flows)) {
+        if let Err(error) =
+            scan_and_run_due_flows(&db_path, Arc::clone(&active_flows), app_handle.clone())
+        {
             eprintln!("Scheduler scan failed: {error}");
         }
 
@@ -45,6 +77,7 @@ pub fn start_scheduler(db_path: PathBuf) {
 fn scan_and_run_due_flows(
     db_path: &Path,
     active_flows: Arc<Mutex<HashSet<String>>>,
+    app_handle: AppHandle,
 ) -> AppResult<()> {
     let connection = open_connection(db_path)?;
     let due_flows = list_due_flows(&connection)?;
@@ -69,11 +102,12 @@ fn scan_and_run_due_flows(
 
         let db_path = db_path.to_path_buf();
         let active_flows = Arc::clone(&active_flows);
+        let app_handle = app_handle.clone();
 
         thread::spawn(move || {
             let flow_id = due_flow.id.clone();
 
-            if let Err(error) = execute_flow(&db_path, due_flow) {
+            if let Err(error) = execute_flow(&db_path, due_flow, app_handle) {
                 eprintln!("Flow execution failed for {flow_id}: {error}");
             }
 
@@ -86,10 +120,11 @@ fn scan_and_run_due_flows(
     Ok(())
 }
 
-fn execute_flow(db_path: &Path, flow: DueFlow) -> AppResult<()> {
+fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResult<()> {
     let started_at = current_local_datetime(db_path)?;
     let started_instant = Instant::now();
     let runtime_env = load_project_runtime_env(db_path, &flow.project_id)?;
+    emit_execution_started(&app_handle, &flow, &started_at);
 
     let mut command = Command::new(&flow.executable_path);
     command
@@ -129,6 +164,8 @@ fn execute_flow(db_path: &Path, flow: DueFlow) -> AppResult<()> {
                 &message,
                 flow.interval_seconds,
             )?;
+
+            emit_execution_finished(&app_handle, &flow.id);
 
             return Ok(());
         }
@@ -194,6 +231,8 @@ fn execute_flow(db_path: &Path, flow: DueFlow) -> AppResult<()> {
         flow.interval_seconds,
     )?;
 
+    emit_execution_finished(&app_handle, &flow.id);
+
     Ok(())
 }
 
@@ -201,34 +240,39 @@ fn list_due_flows(connection: &Connection) -> AppResult<Vec<DueFlow>> {
     let mut statement = connection.prepare(
         r#"
         SELECT
-            id,
-            project_id,
-            interval_seconds,
-            executable_path,
-            args_json,
-            working_directory,
-            timeout_seconds
-        FROM flows
-        WHERE enabled = 1
-          AND next_run_at IS NOT NULL
-          AND next_run_at NOT IN ('Paused', 'Pending schedule')
-          AND datetime(next_run_at) <= datetime('now', 'localtime')
-        ORDER BY datetime(next_run_at) ASC
+            f.id,
+            f.project_id,
+            p.name,
+            f.name,
+            f.interval_seconds,
+            f.executable_path,
+            f.args_json,
+            f.working_directory,
+            f.timeout_seconds
+        FROM flows f
+        JOIN projects p ON p.id = f.project_id
+        WHERE f.enabled = 1
+          AND f.next_run_at IS NOT NULL
+          AND f.next_run_at NOT IN ('Paused', 'Pending schedule')
+          AND datetime(f.next_run_at) <= datetime('now', 'localtime')
+        ORDER BY datetime(f.next_run_at) ASC
         "#,
     )?;
 
     let rows = statement.query_map([], |row| {
-        let args_json: String = row.get(4)?;
+        let args_json: String = row.get(6)?;
         let args = serde_json::from_str::<Vec<String>>(&args_json).unwrap_or_default();
 
         Ok(DueFlow {
             id: row.get(0)?,
             project_id: row.get(1)?,
-            interval_seconds: row.get(2)?,
-            executable_path: row.get(3)?,
+            project_name: row.get(2)?,
+            name: row.get(3)?,
+            interval_seconds: row.get(4)?,
+            executable_path: row.get(5)?,
             args,
-            working_directory: row.get(5)?,
-            timeout_seconds: row.get(6)?,
+            working_directory: row.get(7)?,
+            timeout_seconds: row.get(8)?,
         })
     })?;
 
@@ -281,6 +325,38 @@ fn is_valid_env_key(key: &str) -> bool {
     }
 
     chars.all(|char| char == '_' || char.is_ascii_alphanumeric())
+}
+
+fn emit_execution_started(app_handle: &AppHandle, flow: &DueFlow, started_at: &str) {
+    let note = if flow.args.is_empty() {
+        flow.executable_path.clone()
+    } else {
+        format!("{} {}", flow.executable_path, flow.args.join(" "))
+    };
+
+    let payload = FlowExecutionStartedEvent {
+        execution: ActiveExecutionPayload {
+            id: format!("active-{}", flow.id),
+            flow_id: flow.id.clone(),
+            flow_name: flow.name.clone(),
+            project_id: flow.project_id.clone(),
+            project_name: flow.project_name.clone(),
+            stage: "main".into(),
+            started_at: started_at.into(),
+            elapsed_label: "0s".into(),
+            note,
+        },
+    };
+
+    let _ = app_handle.emit("flow-execution-started", payload);
+}
+
+fn emit_execution_finished(app_handle: &AppHandle, flow_id: &str) {
+    let payload = FlowExecutionFinishedEvent {
+        flow_id: flow_id.into(),
+    };
+
+    let _ = app_handle.emit("flow-execution-finished", payload);
 }
 
 fn persist_flow_run(

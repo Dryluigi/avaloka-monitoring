@@ -1,11 +1,13 @@
 import {
   createContext,
   useContext,
+  useCallback,
   useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+import { listen } from "@tauri-apps/api/event";
 
 import { withProjectCollectionCounts } from "../lib/project-summary";
 import { listFlows } from "../services/flow-api";
@@ -14,9 +16,12 @@ import { listProjects } from "../services/project-api";
 import { listProjectVariables } from "../services/project-variable-api";
 import { listAlarms, listFlowRuns, listFlowState } from "../services/runtime-read-api";
 import type {
+  ActiveExecutionSummary,
   AlarmSummary,
   DrawerState,
   FlowFilter,
+  FlowExecutionFinishedEvent,
+  FlowExecutionStartedEvent,
   FlowRunSummary,
   FlowStateEntry,
   FlowSummary,
@@ -40,6 +45,10 @@ type AppStateContextValue = {
   setAlarms: React.Dispatch<React.SetStateAction<AlarmSummary[]>>;
   flowStateEntries: FlowStateEntry[];
   setFlowStateEntries: React.Dispatch<React.SetStateAction<FlowStateEntry[]>>;
+  activeExecutions: ActiveExecutionSummary[];
+  setActiveExecutions: React.Dispatch<
+    React.SetStateAction<ActiveExecutionSummary[]>
+  >;
   selectedProjectId: string;
   setSelectedProjectId: React.Dispatch<React.SetStateAction<string>>;
   selectedFlowId: string;
@@ -62,15 +71,52 @@ export function AppStateProvider(props: { children: ReactNode }) {
   const [flowStateEntries, setFlowStateEntries] = useState<FlowStateEntry[]>(
     [],
   );
+  const [activeExecutions, setActiveExecutions] = useState<
+    ActiveExecutionSummary[]
+  >([]);
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedFlowId, setSelectedFlowId] = useState("");
   const [flowFilter, setFlowFilter] = useState<FlowFilter>("all");
   const [drawer, setDrawer] = useState<DrawerState>({ type: null });
 
+  const loadPersistedData = useCallback(async () => {
+    const [
+      persistedProjects,
+      persistedFlows,
+      persistedVariables,
+      persistedPrerequisites,
+      persistedRuns,
+      persistedAlarms,
+      persistedFlowState,
+    ] = await Promise.all([
+      listProjects(),
+      listFlows(),
+      listProjectVariables(),
+      listPrerequisites(),
+      listFlowRuns(),
+      listAlarms(),
+      listFlowState(),
+    ]);
+
+    setFlows(persistedFlows);
+    setVariables(persistedVariables);
+    setPrerequisites(persistedPrerequisites);
+    setRuns(persistedRuns);
+    setAlarms(persistedAlarms);
+    setFlowStateEntries(persistedFlowState);
+    setProjects(
+      withProjectCollectionCounts(
+        persistedProjects,
+        persistedFlows,
+        persistedVariables,
+      ),
+    );
+  }, []);
+
   useEffect(() => {
     let ignore = false;
 
-    async function loadPersistedData() {
+    async function loadInitialData() {
       try {
         const [
           persistedProjects,
@@ -90,32 +136,89 @@ export function AppStateProvider(props: { children: ReactNode }) {
           listFlowState(),
         ]);
 
-        if (!ignore) {
-          setFlows(persistedFlows);
-          setVariables(persistedVariables);
-          setPrerequisites(persistedPrerequisites);
-          setRuns(persistedRuns);
-          setAlarms(persistedAlarms);
-          setFlowStateEntries(persistedFlowState);
-          setProjects(
-            withProjectCollectionCounts(
-              persistedProjects,
-              persistedFlows,
-              persistedVariables,
-            ),
-          );
+        if (ignore) {
+          return;
         }
+
+        setFlows(persistedFlows);
+        setVariables(persistedVariables);
+        setPrerequisites(persistedPrerequisites);
+        setRuns(persistedRuns);
+        setAlarms(persistedAlarms);
+        setFlowStateEntries(persistedFlowState);
+        setProjects(
+          withProjectCollectionCounts(
+            persistedProjects,
+            persistedFlows,
+            persistedVariables,
+          ),
+        );
       } catch (error) {
         console.error("Failed to load persisted app data", error);
       }
     }
 
-    void loadPersistedData();
+    void loadInitialData();
 
     return () => {
       ignore = true;
     };
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    let unlistenStarted: (() => void) | undefined;
+    let unlistenFinished: (() => void) | undefined;
+
+    async function registerListeners() {
+      unlistenStarted = await listen<FlowExecutionStartedEvent>(
+        "flow-execution-started",
+        (event) => {
+          if (cancelled) {
+            return;
+          }
+
+          setActiveExecutions((current) => {
+            const filtered = current.filter(
+              (execution) => execution.flowId !== event.payload.execution.flowId,
+            );
+
+            return [...filtered, event.payload.execution].sort((left, right) =>
+              right.startedAt.localeCompare(left.startedAt),
+            );
+          });
+        },
+      );
+
+      unlistenFinished = await listen<FlowExecutionFinishedEvent>(
+        "flow-execution-finished",
+        (event) => {
+          if (cancelled) {
+            return;
+          }
+
+          setActiveExecutions((current) =>
+            current.filter((execution) => execution.flowId !== event.payload.flowId),
+          );
+
+          void loadPersistedData().catch((error) => {
+            console.error(
+              "Failed to refresh persisted app data after flow execution",
+              error,
+            );
+          });
+        },
+      );
+    }
+
+    void registerListeners();
+
+    return () => {
+      cancelled = true;
+      unlistenStarted?.();
+      unlistenFinished?.();
+    };
+  }, [loadPersistedData]);
 
   const value = useMemo(
     () => ({
@@ -133,6 +236,8 @@ export function AppStateProvider(props: { children: ReactNode }) {
       setAlarms,
       flowStateEntries,
       setFlowStateEntries,
+      activeExecutions,
+      setActiveExecutions,
       selectedProjectId,
       setSelectedProjectId,
       selectedFlowId,
@@ -143,6 +248,7 @@ export function AppStateProvider(props: { children: ReactNode }) {
       setDrawer,
     }),
     [
+      activeExecutions,
       drawer,
       flowFilter,
       flows,

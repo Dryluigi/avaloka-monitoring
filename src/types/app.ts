@@ -98,6 +98,14 @@ export type ActiveExecutionSummary = {
   note: string;
 };
 
+export type FlowExecutionStartedEvent = {
+  execution: ActiveExecutionSummary;
+};
+
+export type FlowExecutionFinishedEvent = {
+  flowId: string;
+};
+
 export type DrawerState =
   | { type: null }
   | { type: "project"; mode: "create" | "edit"; projectId?: string }

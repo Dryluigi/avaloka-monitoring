@@ -1,7 +1,6 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { STATUS_META } from "../lib/config";
-import { MOCK_ACTIVE_EXECUTIONS } from "../data/mock-data";
 import { formatScheduleTimestamp } from "../lib/time";
 import { useAppState } from "../state/AppStateContext";
 import type { AppSection } from "../types/app";
@@ -14,9 +13,27 @@ export function DashboardView(props: {
   onNavigate: (section: AppSection) => void;
 }) {
   const { onNavigate } = props;
-  const { alarms, flows, projects, runs } = useAppState();
+  const { activeExecutions, alarms, flows, projects, runs } = useAppState();
+  const [nowMs, setNowMs] = useState(() => Date.now());
 
-  const activeExecutions = MOCK_ACTIVE_EXECUTIONS;
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNowMs(Date.now());
+    }, 1000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
+  const activeExecutionsWithElapsed = useMemo(
+    () =>
+      activeExecutions.map((execution) => ({
+        ...execution,
+        elapsedLabel: formatElapsedFromStart(execution.startedAt, nowMs),
+      })),
+    [activeExecutions, nowMs],
+  );
 
   const failingRuns = useMemo(
     () =>
@@ -38,7 +55,7 @@ export function DashboardView(props: {
   const summary = useMemo(
     () => ({
       totalFlows: flows.length,
-      activeExecutions: activeExecutions.length,
+      activeExecutions: activeExecutionsWithElapsed.length,
       failingFlows: flows.filter(
         (flow) =>
           flow.status === "failed" ||
@@ -49,7 +66,7 @@ export function DashboardView(props: {
         ? formatScheduleTimestamp(upcomingFlows[0].nextRunAt)
         : "No upcoming run",
     }),
-    [activeExecutions.length, flows, upcomingFlows],
+    [activeExecutionsWithElapsed.length, flows, upcomingFlows],
   );
 
   return (
@@ -108,11 +125,11 @@ export function DashboardView(props: {
           title="Currently executing"
           description="Flows that are in progress right now, including whether they are in a prerequisite or main execution stage."
         >
-          {activeExecutions.length === 0 ? (
+          {activeExecutionsWithElapsed.length === 0 ? (
             <SmallEmptyState label="No active flow execution right now." />
           ) : (
             <div className="max-h-[28rem] space-y-3 overflow-y-auto pr-1 pb-3">
-              {activeExecutions.map((execution) => (
+              {activeExecutionsWithElapsed.map((execution) => (
                 <div
                   key={execution.id}
                   className="rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-4"
@@ -304,4 +321,22 @@ export function DashboardView(props: {
       </section>
     </div>
   );
+}
+
+function formatElapsedFromStart(startedAt: string, nowMs: number) {
+  const startedMs = Date.parse(startedAt);
+
+  if (Number.isNaN(startedMs)) {
+    return "In progress";
+  }
+
+  const elapsedSeconds = Math.max(0, Math.floor((nowMs - startedMs) / 1000));
+  const minutes = Math.floor(elapsedSeconds / 60);
+  const seconds = elapsedSeconds % 60;
+
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}s`;
+  }
+
+  return `${seconds}s`;
 }
