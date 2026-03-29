@@ -56,18 +56,18 @@ Checklist:
 - [x] add Rust models for the persisted entities
 - [x] add database initialization on app startup
 - [x] implement project CRUD commands
-- [ ] implement flow CRUD commands
+- [x] implement flow CRUD commands
 - [ ] implement project variable CRUD commands
 - [ ] implement prerequisite CRUD commands
-- [ ] expose data-loading commands for the frontend
-- [ ] replace frontend mock data with Tauri command calls
+- [x] expose data-loading commands for the frontend for projects and flows
+- [ ] replace frontend mock data with Tauri command calls for remaining domains
 - [ ] handle empty states using real persisted data
 
 Definition of done:
 
 - projects and flows are stored locally
 - the app reloads persisted data after restart
-- frontend views are backed by real local data
+- frontend views are  backed by real local data
 
 ---
 

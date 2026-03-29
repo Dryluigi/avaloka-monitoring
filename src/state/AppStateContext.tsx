@@ -13,6 +13,7 @@ import {
   MOCK_VARIABLES,
 } from "../data/mock-data";
 import { withProjectCollectionCounts } from "../lib/project-summary";
+import { listFlows } from "../services/flow-api";
 import { listProjects } from "../services/project-api";
 import type {
   DrawerState,
@@ -46,7 +47,7 @@ const AppStateContext = createContext<AppStateContextValue | null>(null);
 
 export function AppStateProvider(props: { children: ReactNode }) {
   const [projects, setProjects] = useState<ProjectSummary[]>([]);
-  const [flows, setFlows] = useState(MOCK_FLOWS);
+  const [flows, setFlows] = useState<FlowSummary[]>([]);
   const [variables, setVariables] = useState(MOCK_VARIABLES);
   const [prerequisites, setPrerequisites] = useState(MOCK_PREREQUISITES);
   const [selectedProjectId, setSelectedProjectId] = useState("");
@@ -57,19 +58,29 @@ export function AppStateProvider(props: { children: ReactNode }) {
   useEffect(() => {
     let ignore = false;
 
-    async function loadPersistedProjects() {
+    async function loadPersistedData() {
       try {
-        const persistedProjects = await listProjects();
+        const [persistedProjects, persistedFlows] = await Promise.all([
+          listProjects(),
+          listFlows(),
+        ]);
 
         if (!ignore) {
-          setProjects(withProjectCollectionCounts(persistedProjects, MOCK_FLOWS, MOCK_VARIABLES));
+          setFlows(persistedFlows);
+          setProjects(
+            withProjectCollectionCounts(
+              persistedProjects,
+              persistedFlows,
+              MOCK_VARIABLES,
+            ),
+          );
         }
       } catch (error) {
-        console.error("Failed to load persisted projects", error);
+        console.error("Failed to load persisted app data", error);
       }
     }
 
-    void loadPersistedProjects();
+    void loadPersistedData();
 
     return () => {
       ignore = true;

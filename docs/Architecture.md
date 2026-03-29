@@ -156,6 +156,7 @@ Files:
 - `src/lib/config.ts`
 - `src/lib/project-summary.ts`
 - `src/services/project-api.ts`
+- `src/services/flow-api.ts`
 - `src/types/app.ts`
 
 Responsibility:

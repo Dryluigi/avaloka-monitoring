@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import { getDrawerTitle } from "../lib/config";
 import { withProjectCounts } from "../lib/project-summary";
+import { createFlow, deleteFlow, updateFlow } from "../services/flow-api";
 import { createProject, updateProject } from "../services/project-api";
 import { useAppState } from "../state/AppStateContext";
 import type {
@@ -334,69 +335,106 @@ export function Drawer() {
               <DrawerActions
                 onCancel={() => setDrawer({ type: null })}
                 onSave={() => {
-                  const parsedArgs = flowDraft.args
-                    .split(" ")
-                    .map((value) => value.trim())
-                    .filter(Boolean);
+                  void (async () => {
+                    try {
+                      if (drawer.mode === "create") {
+                        const createdFlow = await createFlow(
+                          drawer.projectId,
+                          flowDraft,
+                        );
 
-                  if (drawer.mode === "create") {
-                    const nextFlow = {
-                      id: `flow-${Date.now()}`,
-                      projectId: drawer.projectId,
-                      name: flowDraft.name || "Untitled flow",
-                      enabled: flowDraft.enabled,
-                      intervalLabel: flowDraft.intervalLabel,
-                      status: flowDraft.enabled ? "success" : "disabled",
-                      lastRunAt: "Not yet",
-                      nextRunAt: flowDraft.enabled
-                        ? "Pending schedule"
-                        : "Paused",
-                      executablePath: flowDraft.executablePath,
-                      args: parsedArgs,
-                      workingDirectory: flowDraft.workingDirectory,
-                      timeoutSeconds: Number(flowDraft.timeoutSeconds) || 60,
-                      stateCount: 0,
-                    } satisfies (typeof flows)[number];
+                        setFlows((current) => [createdFlow, ...current]);
+                        setSelectedFlowId(createdFlow.id);
+                        setProjects((current) =>
+                          current.map((project) =>
+                            project.id === drawer.projectId
+                              ? withProjectCounts(
+                                  project,
+                                  [createdFlow, ...flows],
+                                  variables,
+                                )
+                              : project,
+                          ),
+                        );
+                      } else if (drawer.flowId) {
+                        const updatedFlow = await updateFlow(
+                          drawer.flowId,
+                          drawer.projectId,
+                          flowDraft,
+                        );
 
-                    setFlows((current) => [nextFlow, ...current]);
-                    setSelectedFlowId(nextFlow.id);
-                    setProjects((current) =>
-                      current.map((project) =>
-                        project.id === drawer.projectId
-                          ? { ...project, flowCount: project.flowCount + 1 }
-                          : project,
-                      ),
-                    );
-                  } else if (drawer.flowId) {
-                    setFlows((current) =>
-                      current.map((flow) =>
-                        flow.id === drawer.flowId
-                          ? {
-                              ...flow,
-                              name: flowDraft.name,
-                              enabled: flowDraft.enabled,
-                              intervalLabel: flowDraft.intervalLabel,
-                              executablePath: flowDraft.executablePath,
-                              args: parsedArgs,
-                              workingDirectory: flowDraft.workingDirectory,
-                              timeoutSeconds:
-                                Number(flowDraft.timeoutSeconds) || 60,
-                              status: flowDraft.enabled
-                                ? flow.status
-                                : "disabled",
-                              nextRunAt: flowDraft.enabled
-                                ? flow.nextRunAt
-                                : "Paused",
-                            }
-                          : flow,
-                      ),
-                    );
-                  }
+                        setFlows((current) =>
+                          current.map((flow) =>
+                            flow.id === drawer.flowId ? updatedFlow : flow,
+                          ),
+                        );
+                        setProjects((current) =>
+                          current.map((project) =>
+                            project.id === drawer.projectId
+                              ? withProjectCounts(
+                                  project,
+                                  flows.map((flow) =>
+                                    flow.id === drawer.flowId ? updatedFlow : flow,
+                                  ),
+                                  variables,
+                                )
+                              : project,
+                          ),
+                        );
+                      }
 
-                  setDrawer({ type: null });
+                      setDrawer({ type: null });
+                    } catch (error) {
+                      console.error("Failed to persist flow", error);
+                    }
+                  })();
                 }}
                 saveLabel={
                   drawer.mode === "create" ? "Create flow" : "Save flow"
+                }
+                onDestructive={
+                  drawer.mode === "edit" && drawer.flowId
+                    ? () => {
+                        void (async () => {
+                          try {
+                            const flowId = drawer.flowId;
+
+                            if (!flowId) {
+                              return;
+                            }
+
+                            await deleteFlow(flowId);
+
+                            const remainingFlows = flows.filter(
+                              (flow) => flow.id !== flowId,
+                            );
+                            const nextProjectFlows = remainingFlows.filter(
+                              (flow) => flow.projectId === drawer.projectId,
+                            );
+
+                            setFlows(remainingFlows);
+                            setProjects((current) =>
+                              current.map((project) =>
+                                project.id === drawer.projectId
+                                  ? withProjectCounts(
+                                      project,
+                                      remainingFlows,
+                                      variables,
+                                    )
+                                  : project,
+                              ),
+                            );
+                            setSelectedFlowId(nextProjectFlows[0]?.id ?? "");
+                            setDrawer({ type: null });
+                          } catch (error) {
+                            console.error("Failed to delete flow", error);
+                          }
+                        })();
+                      }
+                    : undefined
+                }
+                destructiveLabel={
+                  drawer.mode === "edit" ? "Delete flow" : undefined
                 }
               />
             </>

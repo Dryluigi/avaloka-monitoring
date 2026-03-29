@@ -87,7 +87,9 @@ As a user, I want to delete a flow so that I can remove monitoring tasks I no lo
 Acceptance notes:
 
 - user can delete a flow from a project
+- user can delete a flow from the flow edit drawer
 - deleted flow no longer participates in scheduling
+- deleted flow is removed from the project view immediately
 
 ---
 
