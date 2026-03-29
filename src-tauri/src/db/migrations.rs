@@ -66,6 +66,9 @@ pub fn run_migrations(connection: &Connection) -> AppResult<()> {
             duration_label TEXT NOT NULL DEFAULT '',
             summary TEXT NOT NULL DEFAULT '',
             failure_message TEXT,
+            exit_code INTEGER,
+            stdout_text TEXT NOT NULL DEFAULT '',
+            stderr_text TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (flow_id) REFERENCES flows(id) ON DELETE CASCADE
         );
@@ -97,8 +100,39 @@ pub fn run_migrations(connection: &Connection) -> AppResult<()> {
     )?;
 
     ensure_prerequisite_enabled_column(connection)?;
+    ensure_flow_run_columns(connection)?;
 
     seed_default_projects(connection)?;
+
+    Ok(())
+}
+
+fn ensure_flow_run_columns(connection: &Connection) -> AppResult<()> {
+    let mut statement = connection.prepare("PRAGMA table_info(flow_runs)")?;
+    let rows = statement.query_map([], |row| row.get::<_, String>(1))?;
+
+    let mut columns = Vec::new();
+    for row in rows {
+        columns.push(row?);
+    }
+
+    if !columns.iter().any(|column| column == "exit_code") {
+        connection.execute("ALTER TABLE flow_runs ADD COLUMN exit_code INTEGER", [])?;
+    }
+
+    if !columns.iter().any(|column| column == "stdout_text") {
+        connection.execute(
+            "ALTER TABLE flow_runs ADD COLUMN stdout_text TEXT NOT NULL DEFAULT ''",
+            [],
+        )?;
+    }
+
+    if !columns.iter().any(|column| column == "stderr_text") {
+        connection.execute(
+            "ALTER TABLE flow_runs ADD COLUMN stderr_text TEXT NOT NULL DEFAULT ''",
+            [],
+        )?;
+    }
 
     Ok(())
 }

@@ -216,6 +216,22 @@ Recommended behavior:
 
 ---
 
+## Example Script
+
+Example SSH-port check script:
+
+- executable path: `/usr/bin/bash`
+- args: `scripts/check_ssh_port.sh monitor.example.internal 22`
+
+Behavior:
+
+- uses `telnet` to check whether the SSH port is reachable
+- enforces a 30-second timeout
+- exits `0` on success
+- exits non-zero and writes a human-readable error to stderr on failure or timeout
+
+---
+
 ## Security Rules
 
 Scripts must treat injected secrets carefully.

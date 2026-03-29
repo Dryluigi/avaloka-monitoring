@@ -11,5 +11,8 @@ pub struct FlowRun {
     pub duration_label: String,
     pub summary: String,
     pub failure_message: Option<String>,
+    pub exit_code: Option<i64>,
+    pub stdout_text: String,
+    pub stderr_text: String,
     pub created_at: String,
 }

@@ -178,6 +178,7 @@ At the current stage:
 - projects, flows, project variables, prerequisites, runs, alarms, and flow-state detail are loaded through Tauri service wrappers
 - currently executing dashboard cards are still mock-backed until scheduler/runtime work lands
 - project secrets are currently masked in frontend responses, but not yet hardened with stronger at-rest secret storage
+- real-time UI updates are planned to use Tauri events as the primary mechanism instead of frontend polling
 
 This separation matters because it lets us replace the remaining mock-backed domains without rewriting the UI structure.
 
@@ -211,6 +212,8 @@ This includes:
 - drawer state
 
 This is the minimum shared layer needed to avoid excessive prop passing.
+
+For real-time behavior, this same shared state layer is also the intended subscription point for Tauri events. The frontend should listen once at the app-state level, update the base entities there, and let pages re-derive their own display state.
 
 ### 3. Pages derive their own display state
 Each page reads base state and derives local view state.
@@ -262,6 +265,7 @@ The structure already mirrors how a production app would likely be wired:
 - page-level data composition
 - reusable UI layer
 - global overlay layer
+- backend event emission for runtime changes
 
 That means we can replace mock data incrementally without restructuring every screen.
 
@@ -295,6 +299,26 @@ The next natural structural step is to split:
 out of `App.tsx`.
 
 That would make the shell layer as modular as the page layer already is.
+
+### 4. Use Tauri events for live updates
+For live execution feedback, the planned primary mechanism is Tauri events rather than frontend polling.
+
+Planned event examples:
+- `flow-execution-started`
+- `flow-execution-finished`
+- `alarm-created`
+
+Planned wiring:
+- the Rust backend emits events when execution state changes
+- `src/state/AppStateContext.tsx` subscribes to those events once
+- shared state is updated in response to those events
+- `DashboardView`, `ProjectsView`, `RunsView`, and `AlarmsView` re-render from shared state changes
+
+Why this fits the app:
+- the app is desktop and long-running
+- execution changes originate in Rust
+- `currently executing` state is naturally event-driven
+- it avoids periodic reloads when no changes are happening
 
 ---
 
@@ -521,6 +545,10 @@ At the current Phase 3 slice:
 - startup also bootstraps scheduler metadata
 - enabled flows are registered with persisted `next_run_at` timestamps
 - disabled flows are persisted as paused
+- a background scheduler loop scans for due flows
+- due flows execute in independent worker threads
+- overlap is prevented per flow through an in-memory active-flow registry
+- each execution persists a `flow_runs` record and updates `last_run_at` / `next_run_at`
 
 In short:
 
@@ -543,6 +571,7 @@ The intended rules for Phase 2 are:
 - commands stay thin and frontend-facing.
 - shared app resources are accessed through `AppState`.
 - scheduling bootstrap belongs in `scheduler/`.
+- scheduler scanning and execution coordination also belong in `scheduler/`.
 - full runtime execution should still stay separate from repository CRUD modules.
 
 This helps us avoid creating a monolithic `lib.rs` or command layer too early.

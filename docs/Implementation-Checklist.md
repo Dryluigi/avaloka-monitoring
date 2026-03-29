@@ -80,20 +80,27 @@ Goal:
 Checklist:
 
 - [x] implement scheduler startup and flow registration
-- [ ] calculate and persist `last_run_at` and `next_run_at`
-- [ ] prevent overlap for the same flow
-- [ ] allow different flows to run independently
-- [ ] implement external command launching using executable path and args
-- [ ] support working directory and timeout configuration
-- [ ] capture stdout, stderr, exit code, and timestamps
-- [ ] store flow run history after execution
+- [x] calculate and persist `last_run_at` and `next_run_at`
+- [x] prevent overlap for the same flow
+- [x] allow different flows to run independently
+- [x] implement external command launching using executable path and args
+- [x] support working directory and timeout configuration
+- [x] capture stdout, stderr, exit code, and timestamps
+- [x] store flow run history after execution
 - [x] update the frontend with last-run and next-run data
+- [ ] replace mock `currently executing` dashboard data with real runtime execution state
+- [ ] implement Tauri event emission for flow execution lifecycle updates
+- [ ] replace mock `currently executing` dashboard data with Tauri event-backed runtime execution state
+- [ ] refresh the Projects view automatically while flow execution updates are happening
+- [ ] refresh the Runs view automatically when new run records are created
+- [ ] subscribe to Tauri execution events in the frontend shared app state
 
 Definition of done:
 
 - enabled flows execute on schedule
 - run results are persisted
 - the UI shows scheduling status using real execution data
+- Projects and Runs stay updated while the app remains open
 
 ---
 
@@ -161,11 +168,15 @@ Checklist:
 - [ ] persist alarm history locally
 - [x] show alarm history in the frontend
 - [x] show error summary without exposing secrets
+- [ ] emit Tauri events when alarms are created
+- [ ] refresh the Alarms view automatically when new alarms are created
+- [ ] subscribe to Tauri alarm events in the frontend shared app state
 
 Definition of done:
 
 - failures create visible local alarms
 - alarm history is inspectable from the app
+- the Alarms view updates while the app remains open
 
 ---
 
