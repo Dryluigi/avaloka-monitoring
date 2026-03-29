@@ -100,20 +100,26 @@ This keeps each page more autonomous and reduces coupling with the shell.
 ---
 
 ### Drawer
-File:
+Files:
 - `src/components/Drawer.tsx`
+- `src/components/drawer/DrawerShell.tsx`
+- `src/components/drawer/ProjectDrawerForm.tsx`
+- `src/components/drawer/FlowDrawerForm.tsx`
+- `src/components/drawer/VariableDrawerForm.tsx`
+- `src/components/drawer/PrerequisiteDrawerForm.tsx`
 
 Responsibility:
-- render create/edit forms for project, flow, variable, and prerequisite
-- read the current drawer state from shared app state
-- update shared state directly on save
+- `Drawer.tsx` resolves which drawer form is active
+- `DrawerShell.tsx` renders the shared overlay and layout
+- each drawer form owns one persisted entity editor
+- drawer forms read shared state directly and perform their own save/delete actions
 
 Why drawer is global:
 - it behaves like an app-level overlay
 - it may be triggered from different pages
 - centralizing it avoids duplicate modal logic in each page
 
-The drawer is part of the app shell layer, but the form behavior is still self-contained inside the component.
+The drawer is part of the app shell layer, but the form behavior is now split into focused components instead of one large file.
 
 ---
 
