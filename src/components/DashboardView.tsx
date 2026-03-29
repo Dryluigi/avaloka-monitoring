@@ -1,11 +1,7 @@
 import { useMemo } from "react";
 
 import { STATUS_META } from "../lib/config";
-import {
-  MOCK_ACTIVE_EXECUTIONS,
-  MOCK_ALARMS,
-  MOCK_RUNS,
-} from "../data/mock-data";
+import { MOCK_ACTIVE_EXECUTIONS } from "../data/mock-data";
 import { useAppState } from "../state/AppStateContext";
 import type { AppSection } from "../types/app";
 import { ActionButton } from "./ui/buttons";
@@ -17,17 +13,16 @@ export function DashboardView(props: {
   onNavigate: (section: AppSection) => void;
 }) {
   const { onNavigate } = props;
-  const { projects, flows } = useAppState();
+  const { alarms, flows, projects, runs } = useAppState();
 
   const activeExecutions = MOCK_ACTIVE_EXECUTIONS;
-  const alarms = MOCK_ALARMS;
 
   const failingRuns = useMemo(
     () =>
-      MOCK_RUNS.filter((run) => run.failureMessage).sort((left, right) =>
+      runs.filter((run) => run.failureMessage).sort((left, right) =>
         right.startedAt.localeCompare(left.startedAt),
       ),
-    [],
+    [runs],
   );
 
   const upcomingFlows = useMemo(

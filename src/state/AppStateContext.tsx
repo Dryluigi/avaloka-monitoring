@@ -7,17 +7,18 @@ import {
   type ReactNode,
 } from "react";
 
-import {
-  MOCK_FLOWS,
-} from "../data/mock-data";
 import { withProjectCollectionCounts } from "../lib/project-summary";
 import { listFlows } from "../services/flow-api";
 import { listPrerequisites } from "../services/prerequisite-api";
 import { listProjects } from "../services/project-api";
 import { listProjectVariables } from "../services/project-variable-api";
+import { listAlarms, listFlowRuns, listFlowState } from "../services/runtime-read-api";
 import type {
+  AlarmSummary,
   DrawerState,
   FlowFilter,
+  FlowRunSummary,
+  FlowStateEntry,
   FlowSummary,
   ProjectSummary,
   ProjectVariable,
@@ -33,6 +34,12 @@ type AppStateContextValue = {
   setVariables: React.Dispatch<React.SetStateAction<ProjectVariable[]>>;
   prerequisites: PrerequisiteSummary[];
   setPrerequisites: React.Dispatch<React.SetStateAction<PrerequisiteSummary[]>>;
+  runs: FlowRunSummary[];
+  setRuns: React.Dispatch<React.SetStateAction<FlowRunSummary[]>>;
+  alarms: AlarmSummary[];
+  setAlarms: React.Dispatch<React.SetStateAction<AlarmSummary[]>>;
+  flowStateEntries: FlowStateEntry[];
+  setFlowStateEntries: React.Dispatch<React.SetStateAction<FlowStateEntry[]>>;
   selectedProjectId: string;
   setSelectedProjectId: React.Dispatch<React.SetStateAction<string>>;
   selectedFlowId: string;
@@ -50,8 +57,13 @@ export function AppStateProvider(props: { children: ReactNode }) {
   const [flows, setFlows] = useState<FlowSummary[]>([]);
   const [variables, setVariables] = useState<ProjectVariable[]>([]);
   const [prerequisites, setPrerequisites] = useState<PrerequisiteSummary[]>([]);
+  const [runs, setRuns] = useState<FlowRunSummary[]>([]);
+  const [alarms, setAlarms] = useState<AlarmSummary[]>([]);
+  const [flowStateEntries, setFlowStateEntries] = useState<FlowStateEntry[]>(
+    [],
+  );
   const [selectedProjectId, setSelectedProjectId] = useState("");
-  const [selectedFlowId, setSelectedFlowId] = useState(MOCK_FLOWS[0]?.id ?? "");
+  const [selectedFlowId, setSelectedFlowId] = useState("");
   const [flowFilter, setFlowFilter] = useState<FlowFilter>("all");
   const [drawer, setDrawer] = useState<DrawerState>({ type: null });
 
@@ -65,17 +77,26 @@ export function AppStateProvider(props: { children: ReactNode }) {
           persistedFlows,
           persistedVariables,
           persistedPrerequisites,
+          persistedRuns,
+          persistedAlarms,
+          persistedFlowState,
         ] = await Promise.all([
           listProjects(),
           listFlows(),
           listProjectVariables(),
           listPrerequisites(),
+          listFlowRuns(),
+          listAlarms(),
+          listFlowState(),
         ]);
 
         if (!ignore) {
           setFlows(persistedFlows);
           setVariables(persistedVariables);
           setPrerequisites(persistedPrerequisites);
+          setRuns(persistedRuns);
+          setAlarms(persistedAlarms);
+          setFlowStateEntries(persistedFlowState);
           setProjects(
             withProjectCollectionCounts(
               persistedProjects,
@@ -106,6 +127,12 @@ export function AppStateProvider(props: { children: ReactNode }) {
       setVariables,
       prerequisites,
       setPrerequisites,
+      runs,
+      setRuns,
+      alarms,
+      setAlarms,
+      flowStateEntries,
+      setFlowStateEntries,
       selectedProjectId,
       setSelectedProjectId,
       selectedFlowId,
@@ -119,11 +146,14 @@ export function AppStateProvider(props: { children: ReactNode }) {
       drawer,
       flowFilter,
       flows,
+      flowStateEntries,
       prerequisites,
       projects,
+      runs,
       selectedFlowId,
       selectedProjectId,
       variables,
+      alarms,
     ],
   );
 

@@ -59,9 +59,9 @@ Checklist:
 - [x] implement flow CRUD commands
 - [x] implement project variable CRUD commands
 - [x] implement prerequisite CRUD commands
-- [x] expose data-loading commands for the frontend for projects, flows, variables, and prerequisites
-- [ ] replace frontend mock data with Tauri command calls for runs, alarms, and flow state
-- [ ] handle empty states using real persisted data
+- [x] expose data-loading commands for the frontend
+- [x] replace frontend mock data with Tauri command calls for runs, alarms, and flow state
+- [x] handle empty states using real persisted data
 
 Definition of done:
 

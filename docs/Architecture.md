@@ -175,8 +175,8 @@ Responsibility:
 - provide mapping helpers for UI-facing summaries
 
 At the current stage:
-- projects, flows, project variables, and prerequisites are loaded through Tauri service wrappers
-- runs, alarms, and flow-state detail are still frontend mock-backed
+- projects, flows, project variables, prerequisites, runs, alarms, and flow-state detail are loaded through Tauri service wrappers
+- currently executing dashboard cards are still mock-backed until scheduler/runtime work lands
 - project secrets are currently masked in frontend responses, but not yet hardened with stronger at-rest secret storage
 
 This separation matters because it lets us replace the remaining mock-backed domains without rewriting the UI structure.

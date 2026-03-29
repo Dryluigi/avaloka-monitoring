@@ -2,11 +2,6 @@ import { useEffect, useMemo } from "react";
 
 import { STATUS_META } from "../lib/config";
 import { formatSecondsBreakdown, parseIntervalLabelToSeconds } from "../lib/time";
-import {
-  MOCK_ALARMS,
-  MOCK_FLOW_STATE,
-  MOCK_RUNS,
-} from "../data/mock-data";
 import { useAppState } from "../state/AppStateContext";
 import type { FlowFilter } from "../types/app";
 import { ActionButton } from "./ui/buttons";
@@ -45,10 +40,13 @@ function getReadableIntervalLabel(intervalLabel: string) {
 
 export function ProjectsView() {
   const {
+    alarms,
+    flowStateEntries,
     projects,
     variables,
     flows,
     prerequisites,
+    runs,
     selectedProjectId,
     selectedFlowId,
     flowFilter,
@@ -114,13 +112,13 @@ export function ProjectsView() {
   const selectedFlowPrerequisites = prerequisites.filter(
     (prerequisite) => prerequisite.flowId === selectedFlow?.id,
   );
-  const selectedFlowRuns = MOCK_RUNS.filter(
+  const selectedFlowRuns = runs.filter(
     (run) => run.flowId === selectedFlow?.id,
   );
-  const selectedProjectAlarms = MOCK_ALARMS.filter(
+  const selectedProjectAlarms = alarms.filter(
     (alarm) => alarm.projectId === selectedProject?.id,
   );
-  const selectedFlowState = MOCK_FLOW_STATE.filter(
+  const selectedFlowState = flowStateEntries.filter(
     (entry) => entry.flowId === selectedFlow?.id,
   );
 

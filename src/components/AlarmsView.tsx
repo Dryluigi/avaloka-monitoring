@@ -1,9 +1,9 @@
-import { MOCK_ALARMS } from "../data/mock-data";
+import { useAppState } from "../state/AppStateContext";
 import { StatCard } from "./ui/metrics";
 import { EmptyState } from "./ui/status";
 
 export function AlarmsView() {
-  const alarms = MOCK_ALARMS;
+  const { alarms } = useAppState();
 
   return (
     <div className="h-full space-y-6 overflow-y-auto pr-1">

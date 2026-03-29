@@ -1,14 +1,12 @@
 import { useState } from "react";
 
 import { STATUS_META } from "../lib/config";
-import { MOCK_RUNS } from "../data/mock-data";
 import { useAppState } from "../state/AppStateContext";
 import { StatCard } from "./ui/metrics";
 import { StatusPill } from "./ui/status";
 
 export function RunsView() {
-  const { projects } = useAppState();
-  const runs = MOCK_RUNS;
+  const { projects, runs } = useAppState();
   const pageSize = 6;
   const [page, setPage] = useState(1);
   const totalPages = Math.max(1, Math.ceil(runs.length / pageSize));

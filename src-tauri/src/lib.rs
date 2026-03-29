@@ -39,7 +39,10 @@ pub fn run() {
             commands::prerequisite_commands::list_prerequisites,
             commands::prerequisite_commands::create_prerequisite,
             commands::prerequisite_commands::update_prerequisite,
-            commands::prerequisite_commands::delete_prerequisite
+            commands::prerequisite_commands::delete_prerequisite,
+            commands::runtime_read_commands::list_flow_runs,
+            commands::runtime_read_commands::list_alarms,
+            commands::runtime_read_commands::list_flow_state
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
