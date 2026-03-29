@@ -118,6 +118,7 @@ Checklist:
 - [x] inject prerequisite output values into later prerequisites
 - [x] inject prerequisite output values into the main flow
 - [x] inject project variables and secrets into runtime environment
+- [ ] inject app-provided runtime metadata such as `FLOW_ID`, `PROJECT_ID`, and `FLOW_RUN_ID`
 
 Definition of done:
 
@@ -135,12 +136,12 @@ Goal:
 
 Checklist:
 
-- [ ] define a persisted flow-state storage model
-- [ ] decide how scripts write state values back to the app
-- [ ] load stored flow-state values before execution
-- [ ] inject stored flow-state values into prerequisites and main flow
-- [ ] persist updated flow-state values after successful execution
-- [ ] expose flow-state inspection in the UI if needed for debugging
+- [x] define a persisted flow-state storage model
+- [x] decide how scripts write state values back to the app
+- [x] load stored flow-state values before execution
+- [x] inject stored flow-state values into prerequisites and main flow
+- [x] persist updated flow-state values after successful execution
+- [x] expose flow-state inspection in the UI if needed for debugging
 
 Definition of done:
 
@@ -214,6 +215,16 @@ Checklist:
 - [ ] add edge-case handling for invalid executable paths
 - [ ] add edge-case handling for malformed prerequisite output
 - [ ] test restart behavior with persisted scheduling data
+- [ ] add project name to the Dashboard `What will run next` section
+- [ ] add project name to the Dashboard alarm stream
+- [ ] change Dashboard next-execution date formatting to `29 Mar 2026, 21:10:ss`
+- [ ] change Projects flow-list `Next run` formatting to `29 Mar 2026, 21:10:ss`
+- [ ] change Projects flow detail `Next run` and `Last run` formatting to `29 Mar 2026, 21:10:ss`
+- [ ] add a live clock to the topbar on every page using `29 Mar 2026, 21:10:ss` format
+- [ ] add a max height with internal scrolling to the project variables section
+- [ ] add a max height with internal scrolling to the recent alarms section in Projects
+- [ ] hide `STATE:...` and other runtime metadata lines from user-facing run summaries in Projects `Recent runs`
+- [ ] hide `STATE:...` and other runtime metadata lines from user-facing run summaries in the Runs page
 - [ ] clean up UI consistency and empty states
 - [ ] review documentation against actual implementation
 

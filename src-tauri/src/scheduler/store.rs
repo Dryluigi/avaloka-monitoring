@@ -90,6 +90,39 @@ pub(crate) fn load_project_runtime_env(
     Ok(env_vars)
 }
 
+pub(crate) fn load_flow_state_env(
+    db_path: &Path,
+    flow_id: &str,
+) -> AppResult<Vec<(String, String)>> {
+    let connection = open_connection(db_path)?;
+    let mut statement = connection.prepare(
+        r#"
+        SELECT key, value
+        FROM flow_state
+        WHERE flow_id = ?1
+        ORDER BY updated_at ASC, key ASC
+        "#,
+    )?;
+
+    let rows = statement.query_map(params![flow_id], |row| {
+        let key: String = row.get(0)?;
+        let value: String = row.get(1)?;
+        Ok((key, value))
+    })?;
+
+    let mut env_vars = Vec::new();
+
+    for row in rows {
+        let (key, value) = row?;
+
+        if is_valid_env_key(&key) {
+            env_vars.push((key, value));
+        }
+    }
+
+    Ok(env_vars)
+}
+
 pub(crate) fn list_enabled_prerequisites(
     db_path: &Path,
     flow_id: &str,
@@ -231,6 +264,42 @@ pub(crate) fn persist_alarm(
         "#,
         params![alarm_id, flow_id, severity, created_at, truncate_text(message)],
     )?;
+
+    Ok(())
+}
+
+pub(crate) fn upsert_flow_state_entries(
+    db_path: &Path,
+    flow_id: &str,
+    entries: &[(String, String)],
+) -> AppResult<()> {
+    if entries.is_empty() {
+        return Ok(());
+    }
+
+    let connection = open_connection(db_path)?;
+    let now: String =
+        connection.query_row("SELECT datetime('now', 'localtime')", [], |row| row.get(0))?;
+
+    let mut statement = connection.prepare(
+        r#"
+        INSERT INTO flow_state (id, flow_id, key, value, updated_at)
+        VALUES (?1, ?2, ?3, ?4, ?5)
+        ON CONFLICT(flow_id, key) DO UPDATE SET
+            value = excluded.value,
+            updated_at = excluded.updated_at
+        "#,
+    )?;
+
+    for (key, value) in entries {
+        statement.execute(params![
+            generate_id("state"),
+            flow_id,
+            key,
+            truncate_text(value),
+            now,
+        ])?;
+    }
 
     Ok(())
 }

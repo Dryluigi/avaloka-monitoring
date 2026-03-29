@@ -191,6 +191,8 @@ At the current stage:
 - real-time execution UI updates use Tauri events as the primary mechanism instead of frontend polling
 - flow execution already injects project variables and secrets into the runtime environment for main flow commands
 - enabled prerequisites now execute in order before the main flow and can extend the runtime environment through `KEY=value` stdout output
+- persisted flow-state values are also loaded into the runtime environment before prerequisites and the main flow begin
+- successful prerequisites and main flows can persist cross-run flow state through `STATE:KEY=value` stdout lines
 
 This separation matters because it lets us replace the remaining mock-backed domains without rewriting the UI structure.
 
@@ -370,6 +372,8 @@ Those remain in later phases.
 - Enabled prerequisites now run before the main flow in configured order.
 - The first failing prerequisite stops later prerequisites and skips the main flow.
 - Successful prerequisites can emit `KEY=value` lines on stdout, and those values are injected into later prerequisites and the main flow.
+- Stored flow-state values are loaded before execution and injected into prerequisites and the main flow as runtime environment variables.
+- Successful prerequisites and main flows can emit `STATE:KEY=value` lines on stdout to persist flow-scoped values for future runs.
 - Dedicated prerequisite run history is intentionally not planned right now; the product relies on clear parent flow failure messages that name the failing prerequisite.
 - Runtime failures now persist alarm records locally.
 - Alarm creation emits a Tauri event so the frontend can refresh alarm state while the app is open.

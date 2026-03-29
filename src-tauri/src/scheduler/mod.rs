@@ -22,11 +22,13 @@ use self::events::{
     emit_alarm_created, emit_execution_finished, emit_execution_started, format_flow_note,
     format_prerequisite_note,
 };
-use self::runtime::{execute_command, parse_runtime_output_env, upsert_env};
+use self::runtime::{
+    execute_command, parse_persisted_state_output, parse_runtime_output_env, upsert_env,
+};
 use self::store::{
-    current_local_datetime, list_due_flows, list_enabled_prerequisites, load_project_runtime_env,
-    pause_disabled_flows, persist_alarm, persist_flow_run, register_enabled_flows,
-    update_prerequisite_status,
+    current_local_datetime, list_due_flows, list_enabled_prerequisites, load_flow_state_env,
+    load_project_runtime_env, pause_disabled_flows, persist_alarm, persist_flow_run,
+    register_enabled_flows, update_prerequisite_status, upsert_flow_state_entries,
 };
 use self::types::DueFlow;
 
@@ -101,7 +103,10 @@ fn scan_and_run_due_flows(
 
 fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResult<()> {
     let started_at = current_local_datetime(db_path)?;
-    let mut runtime_env = load_project_runtime_env(db_path, &flow.project_id)?;
+    let mut runtime_env = load_flow_state_env(db_path, &flow.id)?;
+    for (key, value) in load_project_runtime_env(db_path, &flow.project_id)? {
+        upsert_env(&mut runtime_env, key, value);
+    }
     let prerequisites = list_enabled_prerequisites(db_path, &flow.id)?;
 
     for prerequisite in prerequisites {
@@ -129,6 +134,15 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
 
                 for (key, value) in parse_runtime_output_env(&command_result.stdout_text) {
                     upsert_env(&mut runtime_env, key, value);
+                }
+
+                let persisted_state = parse_persisted_state_output(&command_result.stdout_text);
+                if let Err(error) = upsert_flow_state_entries(db_path, &flow.id, &persisted_state)
+                {
+                    eprintln!(
+                        "Failed to persist flow state from prerequisite {} on flow {}: {error}",
+                        prerequisite.id, flow.id
+                    );
                 }
             }
             Ok(command_result) => {
@@ -265,6 +279,13 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
         &result.stderr_text,
         flow.interval_seconds,
     )?;
+
+    if result.status == "success" {
+        let persisted_state = parse_persisted_state_output(&result.stdout_text);
+        if let Err(error) = upsert_flow_state_entries(db_path, &flow.id, &persisted_state) {
+            eprintln!("Failed to persist flow state from flow {}: {error}", flow.id);
+        }
+    }
 
     if result.status != "success" {
         let alarm_message = result

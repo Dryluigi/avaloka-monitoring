@@ -69,16 +69,12 @@ Available sources:
 - project variables
 - project secrets
 - prerequisite output values from earlier successful prerequisites
-- app-provided runtime metadata
 
 Example environment variables:
 
 - `BASE_URL`
 - `API_TOKEN`
 - `SSH_HOST`
-- `FLOW_ID`
-- `PROJECT_ID`
-- `FLOW_RUN_ID`
 
 Rules:
 
@@ -87,6 +83,7 @@ Rules:
 - later prerequisites receive values emitted by earlier prerequisites
 - the main flow receives values emitted by all successful prerequisites
 - disabled prerequisites are skipped entirely
+- app-provided runtime metadata such as `FLOW_ID`, `PROJECT_ID`, and `FLOW_RUN_ID` is planned, but not yet injected in the current implementation
 
 ---
 
@@ -127,6 +124,7 @@ Stdout is used for:
 
 - diagnostics and history
 - prerequisite output values, when applicable
+- persisted flow-state output values, when applicable
 
 ### Standard Error
 
@@ -173,6 +171,39 @@ After a successful prerequisite, these values become available to:
 
 - the next prerequisite
 - the main flow script
+
+---
+
+## Persisted Flow-State Output Standard
+
+Successful prerequisites and main flows may persist values for later executions of the same flow.
+
+The required format is:
+
+```text
+STATE:KEY=value
+STATE:ANOTHER_KEY=another-value
+```
+
+Rules:
+
+- one state value per line
+- key must be environment-variable safe
+- value is everything after the first `=`
+- only valid `STATE:KEY=value` lines are persisted
+- persisted values are scoped to the same flow only
+- persisted values are injected into later executions of that same flow
+
+Example:
+
+```text
+STATE:LAST_SUCCESS_HASH=abc123
+STATE:LAST_REMOTE_HOST=10.8.0.1
+```
+
+Use this when the value should survive app restart and be available in future executions.
+
+Use plain `KEY=value` prerequisite output when the value is only needed later in the current execution.
 
 ---
 

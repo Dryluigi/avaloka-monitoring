@@ -257,6 +257,7 @@ As a user, I want a flow to store values that can be used in its next execution 
 Acceptance notes:
 
 - a flow can persist key/value data after execution
+- prerequisites and the main flow can persist values by emitting `STATE:KEY=value` lines on stdout
 - persisted values are available to the same flow in later executions
 - persisted values survive app restart
 - flow state is scoped to the flow and does not automatically leak to other flows

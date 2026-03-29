@@ -34,6 +34,8 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - Project variables and secrets are already available to flow runtime execution, including enabled prerequisites and the main flow.
 - Prerequisites run before the main flow and can emit `KEY=value` outputs for later steps.
 - Enabled prerequisites now execute in order and can pass `KEY=value` runtime outputs into later prerequisites and the main flow.
+- Stored flow-state values are injected into later executions of the same flow.
+- Successful prerequisites and main flows can persist cross-run state with `STATE:KEY=value` stdout lines.
 - Prerequisites can also be disabled without being deleted.
 - Different flows may run concurrently, but the same flow must not overlap with itself.
 - Failures trigger local desktop alarms, are recorded in local history, and include a human-readable failure message.

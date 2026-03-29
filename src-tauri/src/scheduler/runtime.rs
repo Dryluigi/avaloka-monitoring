@@ -120,6 +120,23 @@ pub(crate) fn parse_runtime_output_env(stdout_text: &str) -> Vec<(String, String
         .collect()
 }
 
+pub(crate) fn parse_persisted_state_output(stdout_text: &str) -> Vec<(String, String)> {
+    stdout_text
+        .lines()
+        .filter_map(|line| {
+            let trimmed = line.trim();
+            let directive = trimmed.strip_prefix("STATE:")?;
+            let (key, value) = directive.split_once('=')?;
+
+            if !is_valid_env_key(key) {
+                return None;
+            }
+
+            Some((key.to_string(), value.to_string()))
+        })
+        .collect()
+}
+
 pub(crate) fn upsert_env(runtime_env: &mut Vec<(String, String)>, key: String, value: String) {
     if let Some(entry) = runtime_env.iter_mut().find(|(existing, _)| existing == &key) {
         entry.1 = value;
