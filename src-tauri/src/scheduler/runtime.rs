@@ -24,6 +24,8 @@ pub(crate) fn execute_command(
         } else {
             working_directory
         })
+        .env_remove("PYTHONHOME")
+        .env_remove("PYTHONPATH")
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
 
