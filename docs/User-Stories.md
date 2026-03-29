@@ -126,6 +126,16 @@ Acceptance notes:
 - scheduling information is updated after each execution
 - the UI shows this information in a flow detail view or list view
 
+### Inspect Flow Run History
+
+As a user, I want to inspect the recent run history of a flow so that I can review outcomes without leaving the project screen.
+
+Acceptance notes:
+
+- user can see recent run records for the selected flow
+- run history includes status, summary, and failure message when present
+- run history supports pagination when the selected flow has many records
+
 ### View Dashboard At A Glance
 
 As a user, I want a dashboard page that gives me enough information in one look so that I can understand the current operational state without opening multiple screens.

@@ -1,3 +1,5 @@
+import { useEffect, useMemo, useState } from "react";
+
 import { STATUS_META } from "../../lib/config";
 import { formatScheduleTimestamp } from "../../lib/time";
 import type {
@@ -29,6 +31,23 @@ export function FlowInspectorPanels(props: {
     selectedFlowState,
     selectedProject,
   } = props;
+  const runsPageSize = 5;
+  const [runsPage, setRunsPage] = useState(1);
+
+  useEffect(() => {
+    setRunsPage(1);
+  }, [selectedFlow?.id]);
+
+  const totalRunPages = Math.max(1, Math.ceil(selectedFlowRuns.length / runsPageSize));
+  const currentRunPage = Math.min(runsPage, totalRunPages);
+  const paginatedRuns = useMemo(
+    () =>
+      selectedFlowRuns.slice(
+        (currentRunPage - 1) * runsPageSize,
+        currentRunPage * runsPageSize,
+      ),
+    [currentRunPage, selectedFlowRuns],
+  );
 
   return (
     <div className="space-y-6">
@@ -190,7 +209,7 @@ export function FlowInspectorPanels(props: {
           <SmallEmptyState label="This flow does not have any run history yet." />
         ) : (
           <div className="space-y-3">
-            {selectedFlowRuns.map((run) => (
+            {paginatedRuns.map((run) => (
               <div
                 key={run.id}
                 className="rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3"
@@ -214,6 +233,33 @@ export function FlowInspectorPanels(props: {
                 ) : null}
               </div>
             ))}
+
+            <div className="flex flex-col gap-3 border-t border-[var(--border-soft)] pt-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm text-slate-500">
+                Page {currentRunPage} of {totalRunPages}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setRunsPage((value) => Math.max(1, value - 1))}
+                  disabled={currentRunPage === 1}
+                  className="rounded-2xl border border-[var(--border-strong)] bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[var(--accent-border)] hover:text-slate-950 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Previous
+                </button>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setRunsPage((value) => Math.min(totalRunPages, value + 1))
+                  }
+                  disabled={currentRunPage === totalRunPages}
+                  className="rounded-2xl border border-[var(--accent-border)] bg-[var(--accent)] px-4 py-2 text-sm font-medium text-white transition hover:bg-[var(--accent-strong)] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </CardSection>
