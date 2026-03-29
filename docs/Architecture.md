@@ -373,6 +373,8 @@ Those remain in later phases.
 - Dedicated prerequisite run history is still pending later work.
 - Runtime failures now persist alarm records locally.
 - Alarm creation emits a Tauri event so the frontend can refresh alarm state while the app is open.
+- Runtime failures also trigger local desktop notifications through the Tauri notification plugin.
+- On Linux, runtime failures also trigger a warning sound through `paplay` using the system dialog-warning sound.
 
 ---
 
