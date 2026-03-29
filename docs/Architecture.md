@@ -180,6 +180,7 @@ At the current stage:
 - project secrets are currently masked in frontend responses, but not yet hardened with stronger at-rest secret storage
 - real-time execution UI updates use Tauri events as the primary mechanism instead of frontend polling
 - flow execution already injects project variables and secrets into the runtime environment for main flow commands
+- enabled prerequisites now execute in order before the main flow and can extend the runtime environment through `KEY=value` stdout output
 
 This separation matters because it lets us replace the remaining mock-backed domains without rewriting the UI structure.
 
@@ -355,7 +356,10 @@ Those remain in later phases.
 - The scheduler now injects project variables and secrets into the main flow process environment before launch.
 - Variables are passed using their configured keys as environment variable names.
 - Keys must be environment-variable safe to be injected cleanly.
-- Prerequisite runtime execution and prerequisite-to-flow value propagation are still pending later phases.
+- Enabled prerequisites now run before the main flow in configured order.
+- The first failing prerequisite stops later prerequisites and skips the main flow.
+- Successful prerequisites can emit `KEY=value` lines on stdout, and those values are injected into later prerequisites and the main flow.
+- Dedicated prerequisite run history is still pending later work.
 
 ---
 

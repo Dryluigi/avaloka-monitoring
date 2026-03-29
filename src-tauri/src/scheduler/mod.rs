@@ -25,6 +25,14 @@ struct DueFlow {
     timeout_seconds: i64,
 }
 
+#[derive(Clone, Debug)]
+struct PrerequisiteSpec {
+    id: String,
+    name: String,
+    executable_path: String,
+    args: Vec<String>,
+}
+
 #[derive(Clone, Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct ActiveExecutionPayload {
@@ -49,6 +57,16 @@ struct FlowExecutionStartedEvent {
 #[serde(rename_all = "camelCase")]
 struct FlowExecutionFinishedEvent {
     flow_id: String,
+}
+
+struct CommandRunResult {
+    status: String,
+    summary: String,
+    failure_message: Option<String>,
+    exit_code: Option<i64>,
+    stdout_text: String,
+    stderr_text: String,
+    duration_label: String,
 }
 
 pub fn bootstrap_scheduler(db_path: &Path) -> AppResult<()> {
@@ -122,27 +140,109 @@ fn scan_and_run_due_flows(
 
 fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResult<()> {
     let started_at = current_local_datetime(db_path)?;
-    let started_instant = Instant::now();
-    let runtime_env = load_project_runtime_env(db_path, &flow.project_id)?;
-    emit_execution_started(&app_handle, &flow, &started_at);
+    let mut runtime_env = load_project_runtime_env(db_path, &flow.project_id)?;
+    let prerequisites = list_enabled_prerequisites(db_path, &flow.id)?;
 
-    let mut command = Command::new(&flow.executable_path);
-    command
-        .args(&flow.args)
-        .current_dir(if flow.working_directory.is_empty() {
-            "."
-        } else {
-            flow.working_directory.as_str()
-        })
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
+    for prerequisite in prerequisites {
+        let prerequisite_started_at = current_local_datetime(db_path)?;
+        emit_execution_started(
+            &app_handle,
+            &flow,
+            &prerequisite_started_at,
+            "prerequisite",
+            &format_prerequisite_note(&prerequisite),
+        );
 
-    for (key, value) in &runtime_env {
-        command.env(key, value);
+        let result = execute_command(
+            &prerequisite.executable_path,
+            &prerequisite.args,
+            &flow.working_directory,
+            flow.timeout_seconds,
+            &runtime_env,
+            "prerequisite",
+        );
+
+        match result {
+            Ok(command_result) if command_result.status == "success" => {
+                update_prerequisite_status(db_path, &prerequisite.id, "success")?;
+
+                for (key, value) in parse_runtime_output_env(&command_result.stdout_text) {
+                    upsert_env(&mut runtime_env, key, value);
+                }
+            }
+            Ok(command_result) => {
+                update_prerequisite_status(db_path, &prerequisite.id, "failed")?;
+                let finished_at = current_local_datetime(db_path)?;
+                let summary = format!("Prerequisite failed: {}", prerequisite.name);
+                let failure_message = command_result
+                    .failure_message
+                    .unwrap_or_else(|| command_result.summary.clone());
+
+                persist_flow_run(
+                    db_path,
+                    &flow.id,
+                    "prerequisite_failed",
+                    &started_at,
+                    &finished_at,
+                    command_result.duration_label.as_str(),
+                    &summary,
+                    Some(&failure_message),
+                    command_result.exit_code,
+                    &command_result.stdout_text,
+                    &command_result.stderr_text,
+                    flow.interval_seconds,
+                )?;
+
+                emit_execution_finished(&app_handle, &flow.id);
+                return Ok(());
+            }
+            Err(error) => {
+                update_prerequisite_status(db_path, &prerequisite.id, "failed")?;
+                let finished_at = current_local_datetime(db_path)?;
+                let failure_message = format!(
+                    "Prerequisite `{}` could not be launched: {error}",
+                    prerequisite.name
+                );
+
+                persist_flow_run(
+                    db_path,
+                    &flow.id,
+                    "prerequisite_failed",
+                    &started_at,
+                    &finished_at,
+                    "0s",
+                    &format!("Prerequisite failed: {}", prerequisite.name),
+                    Some(&failure_message),
+                    None,
+                    "",
+                    &failure_message,
+                    flow.interval_seconds,
+                )?;
+
+                emit_execution_finished(&app_handle, &flow.id);
+                return Ok(());
+            }
+        }
     }
 
-    let mut child = match command.spawn() {
-        Ok(child) => child,
+    let main_started_at = current_local_datetime(db_path)?;
+    emit_execution_started(
+        &app_handle,
+        &flow,
+        &main_started_at,
+        "main",
+        &format_flow_note(&flow),
+    );
+
+    let result = match execute_command(
+        &flow.executable_path,
+        &flow.args,
+        &flow.working_directory,
+        flow.timeout_seconds,
+        &runtime_env,
+        "main",
+    ) {
+        Ok(result) => result,
         Err(error) => {
             let finished_at = current_local_datetime(db_path)?;
             let message = format!(
@@ -166,68 +266,23 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
             )?;
 
             emit_execution_finished(&app_handle, &flow.id);
-
             return Ok(());
         }
     };
-
-    let mut timed_out = false;
-
-    loop {
-        if started_instant.elapsed() >= Duration::from_secs(flow.timeout_seconds.max(1) as u64) {
-            timed_out = true;
-            let _ = child.kill();
-            break;
-        }
-
-        match child.try_wait()? {
-            Some(_) => break,
-            None => thread::sleep(Duration::from_millis(200)),
-        }
-    }
-
-    let output = child.wait_with_output()?;
     let finished_at = current_local_datetime(db_path)?;
-    let duration_label = format_duration_label(started_instant.elapsed());
-    let stdout_text = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    let stderr_text = String::from_utf8_lossy(&output.stderr).trim().to_string();
-    let exit_code = output.status.code().map(i64::from);
-
-    let (status, summary, failure_message) = if timed_out {
-        (
-            "timed_out".to_string(),
-            "Flow execution timed out".to_string(),
-            Some(format!(
-                "Process exceeded {} seconds and was terminated.",
-                flow.timeout_seconds
-            )),
-        )
-    } else if output.status.success() {
-        (
-            "success".to_string(),
-            summarize_success(&stdout_text),
-            None,
-        )
-    } else {
-        (
-            "failed".to_string(),
-            summarize_failure(&stderr_text, &stdout_text, exit_code),
-            Some(summarize_failure(&stderr_text, &stdout_text, exit_code)),
-        )
-    };
 
     persist_flow_run(
         db_path,
         &flow.id,
-        &status,
+        &result.status,
         &started_at,
         &finished_at,
-        &duration_label,
-        &summary,
-        failure_message.as_deref(),
-        exit_code,
-        &stdout_text,
-        &stderr_text,
+        &result.duration_label,
+        &result.summary,
+        result.failure_message.as_deref(),
+        result.exit_code,
+        &result.stdout_text,
+        &result.stderr_text,
         flow.interval_seconds,
     )?;
 
@@ -314,6 +369,176 @@ fn load_project_runtime_env(db_path: &Path, project_id: &str) -> AppResult<Vec<(
     Ok(env_vars)
 }
 
+fn list_enabled_prerequisites(db_path: &Path, flow_id: &str) -> AppResult<Vec<PrerequisiteSpec>> {
+    let connection = open_connection(db_path)?;
+    let mut statement = connection.prepare(
+        r#"
+        SELECT id, name, executable_path, args_json
+        FROM prerequisites
+        WHERE flow_id = ?1
+          AND enabled = 1
+        ORDER BY order_index ASC, created_at ASC
+        "#,
+    )?;
+
+    let rows = statement.query_map(params![flow_id], |row| {
+        let args_json: String = row.get(3)?;
+        let args = serde_json::from_str::<Vec<String>>(&args_json).unwrap_or_default();
+
+        Ok(PrerequisiteSpec {
+            id: row.get(0)?,
+            name: row.get(1)?,
+            executable_path: row.get(2)?,
+            args,
+        })
+    })?;
+
+    let mut prerequisites = Vec::new();
+    for row in rows {
+        prerequisites.push(row?);
+    }
+
+    Ok(prerequisites)
+}
+
+fn update_prerequisite_status(db_path: &Path, prerequisite_id: &str, status: &str) -> AppResult<()> {
+    let connection = open_connection(db_path)?;
+    connection.execute(
+        r#"
+        UPDATE prerequisites
+        SET status = ?2,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?1
+        "#,
+        params![prerequisite_id, status],
+    )?;
+
+    Ok(())
+}
+
+fn execute_command(
+    executable_path: &str,
+    args: &[String],
+    working_directory: &str,
+    timeout_seconds: i64,
+    runtime_env: &[(String, String)],
+    stage: &str,
+) -> AppResult<CommandRunResult> {
+    let started_instant = Instant::now();
+    let mut command = Command::new(executable_path);
+
+    command
+        .args(args)
+        .current_dir(if working_directory.is_empty() {
+            "."
+        } else {
+            working_directory
+        })
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    for (key, value) in runtime_env {
+        command.env(key, value);
+    }
+
+    let mut child = command.spawn()?;
+    let mut timed_out = false;
+
+    loop {
+        if started_instant.elapsed() >= Duration::from_secs(timeout_seconds.max(1) as u64) {
+            timed_out = true;
+            let _ = child.kill();
+            break;
+        }
+
+        match child.try_wait()? {
+            Some(_) => break,
+            None => thread::sleep(Duration::from_millis(200)),
+        }
+    }
+
+    let output = child.wait_with_output()?;
+    let stdout_text = String::from_utf8_lossy(&output.stdout).trim().to_string();
+    let stderr_text = String::from_utf8_lossy(&output.stderr).trim().to_string();
+    let exit_code = output.status.code().map(i64::from);
+    let duration_label = format_duration_label(started_instant.elapsed());
+
+    let result = if timed_out {
+        CommandRunResult {
+            status: if stage == "prerequisite" {
+                "prerequisite_failed".into()
+            } else {
+                "timed_out".into()
+            },
+            summary: if stage == "prerequisite" {
+                "Prerequisite execution timed out".into()
+            } else {
+                "Flow execution timed out".into()
+            },
+            failure_message: Some(format!(
+                "Process exceeded {} seconds and was terminated.",
+                timeout_seconds
+            )),
+            exit_code,
+            stdout_text,
+            stderr_text,
+            duration_label,
+        }
+    } else if output.status.success() {
+        CommandRunResult {
+            status: "success".into(),
+            summary: summarize_success(&stdout_text),
+            failure_message: None,
+            exit_code,
+            stdout_text,
+            stderr_text,
+            duration_label,
+        }
+    } else {
+        let failure = summarize_failure(&stderr_text, &stdout_text, exit_code);
+        CommandRunResult {
+            status: if stage == "prerequisite" {
+                "prerequisite_failed".into()
+            } else {
+                "failed".into()
+            },
+            summary: failure.clone(),
+            failure_message: Some(failure),
+            exit_code,
+            stdout_text,
+            stderr_text,
+            duration_label,
+        }
+    };
+
+    Ok(result)
+}
+
+fn parse_runtime_output_env(stdout_text: &str) -> Vec<(String, String)> {
+    stdout_text
+        .lines()
+        .filter_map(|line| {
+            let trimmed = line.trim();
+            let (key, value) = trimmed.split_once('=')?;
+
+            if !is_valid_env_key(key) {
+                return None;
+            }
+
+            Some((key.to_string(), value.to_string()))
+        })
+        .collect()
+}
+
+fn upsert_env(runtime_env: &mut Vec<(String, String)>, key: String, value: String) {
+    if let Some(entry) = runtime_env.iter_mut().find(|(existing, _)| existing == &key) {
+        entry.1 = value;
+        return;
+    }
+
+    runtime_env.push((key, value));
+}
+
 fn is_valid_env_key(key: &str) -> bool {
     let mut chars = key.chars();
     let Some(first) = chars.next() else {
@@ -327,13 +552,13 @@ fn is_valid_env_key(key: &str) -> bool {
     chars.all(|char| char == '_' || char.is_ascii_alphanumeric())
 }
 
-fn emit_execution_started(app_handle: &AppHandle, flow: &DueFlow, started_at: &str) {
-    let note = if flow.args.is_empty() {
-        flow.executable_path.clone()
-    } else {
-        format!("{} {}", flow.executable_path, flow.args.join(" "))
-    };
-
+fn emit_execution_started(
+    app_handle: &AppHandle,
+    flow: &DueFlow,
+    started_at: &str,
+    stage: &str,
+    note: &str,
+) {
     let payload = FlowExecutionStartedEvent {
         execution: ActiveExecutionPayload {
             id: format!("active-{}", flow.id),
@@ -341,10 +566,10 @@ fn emit_execution_started(app_handle: &AppHandle, flow: &DueFlow, started_at: &s
             flow_name: flow.name.clone(),
             project_id: flow.project_id.clone(),
             project_name: flow.project_name.clone(),
-            stage: "main".into(),
+            stage: stage.into(),
             started_at: started_at.into(),
             elapsed_label: "0s".into(),
-            note,
+            note: note.into(),
         },
     };
 
@@ -357,6 +582,26 @@ fn emit_execution_finished(app_handle: &AppHandle, flow_id: &str) {
     };
 
     let _ = app_handle.emit("flow-execution-finished", payload);
+}
+
+fn format_flow_note(flow: &DueFlow) -> String {
+    if flow.args.is_empty() {
+        flow.executable_path.clone()
+    } else {
+        format!("{} {}", flow.executable_path, flow.args.join(" "))
+    }
+}
+
+fn format_prerequisite_note(prerequisite: &PrerequisiteSpec) -> String {
+    if prerequisite.args.is_empty() {
+        prerequisite.executable_path.clone()
+    } else {
+        format!(
+            "{} {}",
+            prerequisite.executable_path,
+            prerequisite.args.join(" ")
+        )
+    }
 }
 
 fn persist_flow_run(

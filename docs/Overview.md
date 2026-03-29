@@ -31,8 +31,9 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - Flows use external commands, not inline scripts, in v1.
 - Project variables and secrets are injected into scripts through environment variables.
 - In the current implementation, secret values are masked in the UI, while stronger at-rest secret hardening is still pending.
-- Project variables and secrets are already available to main flow scripts at runtime. Prerequisite runtime injection remains part of later work.
+- Project variables and secrets are already available to flow runtime execution, including enabled prerequisites and the main flow.
 - Prerequisites run before the main flow and can emit `KEY=value` outputs for later steps.
+- Enabled prerequisites now execute in order and can pass `KEY=value` runtime outputs into later prerequisites and the main flow.
 - Prerequisites can also be disabled without being deleted.
 - Different flows may run concurrently, but the same flow must not overlap with itself.
 - Failures trigger local desktop alarms, are recorded in local history, and include a human-readable failure message.
