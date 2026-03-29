@@ -241,19 +241,32 @@ export function ProjectsView() {
               >
                 Edit project
               </ActionButton>
+              {selectedFlow && selectedProject ? (
+                <ActionButton
+                  onClick={() =>
+                    setDrawer({
+                      type: "flow",
+                      mode: "edit",
+                      projectId: selectedProject.id,
+                      flowId: selectedFlow.id,
+                    })
+                  }
+                >
+                  Edit flow
+                </ActionButton>
+              ) : null}
               <ActionButton
                 variant="primary"
                 onClick={() =>
                   selectedProject &&
                   setDrawer({
                     type: "flow",
-                    mode: selectedFlow ? "edit" : "create",
+                    mode: "create",
                     projectId: selectedProject.id,
-                    flowId: selectedFlow?.id,
                   })
                 }
               >
-                {selectedFlow ? "Edit flow" : "New flow"}
+                New flow
               </ActionButton>
             </div>
           </div>
