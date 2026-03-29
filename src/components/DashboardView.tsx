@@ -48,8 +48,13 @@ export function DashboardView(props: {
       flows
         .filter((flow) => flow.enabled && flow.nextRunAt !== "Paused")
         .sort((left, right) => left.nextRunAt.localeCompare(right.nextRunAt))
-        .slice(0, 4),
-    [flows],
+        .slice(0, 4)
+        .map((flow) => ({
+          ...flow,
+          projectName:
+            projects.find((project) => project.id === flow.projectId)?.name ?? "Unknown project",
+        })),
+    [flows, projects],
   );
 
   const summary = useMemo(
@@ -190,7 +195,7 @@ export function DashboardView(props: {
                         {flow.name}
                       </div>
                       <div className="mt-1 text-xs text-slate-500">
-                        {flow.intervalLabel}
+                        {flow.projectName} • {flow.intervalLabel}
                       </div>
                     </div>
                     <div className="text-right">
@@ -264,8 +269,13 @@ export function DashboardView(props: {
                     className="rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3"
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <div className="text-sm font-medium text-slate-900">
-                        {alarm.flowName}
+                      <div>
+                        <div className="text-sm font-medium text-slate-900">
+                          {alarm.flowName}
+                        </div>
+                        <div className="mt-1 text-xs text-slate-500">
+                          {alarm.projectName}
+                        </div>
                       </div>
                       <span
                         className={[
@@ -282,7 +292,7 @@ export function DashboardView(props: {
                       {alarm.message}
                     </p>
                     <div className="mt-2 text-xs text-slate-400">
-                      {alarm.createdAt}
+                      {formatScheduleTimestamp(alarm.createdAt)}
                     </div>
                   </div>
                 ))}

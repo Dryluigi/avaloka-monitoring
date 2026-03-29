@@ -216,11 +216,11 @@ Checklist:
 - [ ] add edge-case handling for invalid executable paths
 - [ ] add edge-case handling for malformed prerequisite output
 - [ ] test restart behavior with persisted scheduling data
-- [ ] add project name to the Dashboard `What will run next` section
-- [ ] add project name to the Dashboard alarm stream
-- [ ] change Dashboard next-execution date formatting to `29 Mar 2026, 21:10:ss`
-- [ ] change Projects flow-list `Next run` formatting to `29 Mar 2026, 21:10:ss`
-- [ ] change Projects flow detail `Next run` and `Last run` formatting to `29 Mar 2026, 21:10:ss`
+- [x] add project name to the Dashboard `What will run next` section
+- [x] add project name to the Dashboard alarm stream
+- [x] change Dashboard next-execution date formatting to `29 Mar 2026, 21:10:ss`
+- [x] change Projects flow-list `Next run` formatting to `29 Mar 2026, 21:10:ss`
+- [x] change Projects flow detail `Next run` and `Last run` formatting to `29 Mar 2026, 21:10:ss`
 - [ ] add a live clock to the topbar on every page using `29 Mar 2026, 21:10:ss` format
 - [ ] add a max height with internal scrolling to the project variables section
 - [ ] add a max height with internal scrolling to the recent alarms section in Projects

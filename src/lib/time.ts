@@ -73,8 +73,23 @@ export function formatScheduleTimestamp(value: string) {
     return value;
   }
 
+  return formatFullTimestamp(parsed);
+}
+
+export function formatFullTimestamp(value: Date | string) {
+  const parsed = value instanceof Date ? value : new Date(value.replace(" ", "T"));
+
+  if (Number.isNaN(parsed.getTime())) {
+    return String(value);
+  }
+
   return parsed.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: false,
   });
 }
