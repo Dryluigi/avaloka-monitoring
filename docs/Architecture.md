@@ -370,7 +370,7 @@ Those remain in later phases.
 - Enabled prerequisites now run before the main flow in configured order.
 - The first failing prerequisite stops later prerequisites and skips the main flow.
 - Successful prerequisites can emit `KEY=value` lines on stdout, and those values are injected into later prerequisites and the main flow.
-- Dedicated prerequisite run history is still pending later work.
+- Dedicated prerequisite run history is intentionally not planned right now; the product relies on clear parent flow failure messages that name the failing prerequisite.
 - Runtime failures now persist alarm records locally.
 - Alarm creation emits a Tauri event so the frontend can refresh alarm state while the app is open.
 - Runtime failures also trigger local desktop notifications through the Tauri notification plugin.

@@ -111,12 +111,6 @@ Goal:
 
 Checklist:
 
-- [ ] implement ordered prerequisite execution before the main flow
-- [ ] stop on first prerequisite failure
-- [ ] mark the flow as `prerequisite_failed` when applicable
-- [ ] parse prerequisite stdout as `KEY=value` output
-- [ ] inject prerequisite output values into later prerequisites
-- [ ] inject prerequisite output values into the main flow
 - [x] implement ordered prerequisite execution before the main flow
 - [x] stop on first prerequisite failure
 - [x] mark the flow as `prerequisite_failed` when applicable
@@ -124,7 +118,6 @@ Checklist:
 - [x] inject prerequisite output values into later prerequisites
 - [x] inject prerequisite output values into the main flow
 - [x] inject project variables and secrets into runtime environment
-- [ ] record prerequisite run history
 
 Definition of done:
 
