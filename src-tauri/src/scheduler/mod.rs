@@ -135,9 +135,13 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
                 update_prerequisite_status(db_path, &prerequisite.id, "failed")?;
                 let finished_at = current_local_datetime(db_path)?;
                 let summary = format!("Prerequisite failed: {}", prerequisite.name);
-                let failure_message = command_result
+                let raw_failure_message = command_result
                     .failure_message
                     .unwrap_or_else(|| command_result.summary.clone());
+                let failure_message = format!(
+                    "Prerequisite '{}' failed: {}",
+                    prerequisite.name, raw_failure_message
+                );
 
                 persist_flow_run(
                     db_path,
@@ -168,7 +172,7 @@ fn execute_flow(db_path: &Path, flow: DueFlow, app_handle: AppHandle) -> AppResu
                 update_prerequisite_status(db_path, &prerequisite.id, "failed")?;
                 let finished_at = current_local_datetime(db_path)?;
                 let failure_message = format!(
-                    "Prerequisite `{}` could not be launched: {error}",
+                    "Prerequisite '{}' could not be launched: {error}",
                     prerequisite.name
                 );
 

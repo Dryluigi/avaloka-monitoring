@@ -208,6 +208,7 @@ Acceptance notes:
 - flow result becomes `prerequisite_failed`
 - the app records failure details
 - the app sends an alarm
+- the failure message names the prerequisite that caused the failure
 
 ### Pass Values From Prerequisite To Main Flow
 
@@ -320,6 +321,7 @@ Acceptance notes:
 
 - failed runs include a human-readable failure message
 - prerequisite failures include a prerequisite failure message
+- prerequisite failure messages include the prerequisite name and the reason
 - timeout failures include a timeout-specific failure message
 - failure messages are shown in dashboard and run-history views
 

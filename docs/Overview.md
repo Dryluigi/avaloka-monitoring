@@ -37,6 +37,7 @@ The product is designed for users who want desktop-based monitoring with flexibl
 - Prerequisites can also be disabled without being deleted.
 - Different flows may run concurrently, but the same flow must not overlap with itself.
 - Failures trigger local desktop alarms, are recorded in local history, and include a human-readable failure message.
+- Prerequisite-caused failures include the prerequisite name and failure reason.
 - Runtime failures already persist alarm history locally, refresh the alarm view live while the app is open, and trigger local desktop notifications.
 - On Linux, runtime failures also play a local warning sound.
 - While the app is open, execution-related UI updates are planned to be driven by Tauri events from the Rust backend.
