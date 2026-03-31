@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
-import { getCurrentWindow } from "@tauri-apps/api/window";
 
 import { AlarmsView } from "./components/AlarmsView";
 import { DashboardView } from "./components/DashboardView";
 import { Drawer } from "./components/Drawer";
 import { ProjectsView } from "./components/ProjectsView";
 import { RunsView } from "./components/RunsView";
+import { Topbar } from "./components/Topbar";
 import { NAV_ITEMS } from "./lib/config";
 import { AppStateProvider, useAppState } from "./state/AppStateContext";
 import type { AppSection } from "./types/app";
@@ -13,7 +13,7 @@ import type { AppSection } from "./types/app";
 function AppShell() {
   const [section, setSection] = useState<AppSection>("dashboard");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { projects, selectedProjectId, setDrawer } = useAppState();
+  const { projects, selectedProjectId } = useAppState();
 
   const selectedProject =
     projects.find((project) => project.id === selectedProjectId) ??
@@ -39,14 +39,6 @@ function AppShell() {
   useEffect(() => {
     setMobileNavOpen(false);
   }, [section]);
-
-  async function hideToTray() {
-    try {
-      await getCurrentWindow().hide();
-    } catch (error) {
-      console.error("Failed to hide window to tray", error);
-    }
-  }
 
   return (
     <div className="h-screen overflow-hidden bg-[var(--app-bg)] text-slate-900 antialiased">
@@ -102,59 +94,10 @@ function AppShell() {
         </aside>
 
         <main className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden">
-          <div className="sticky top-0 z-20 border-b border-[var(--border-soft)] bg-[var(--panel)]/95 px-5 py-4 backdrop-blur md:px-8">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-start gap-3">
-                <button
-                  type="button"
-                  onClick={() => setMobileNavOpen(true)}
-                  className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[var(--border-strong)] bg-white text-slate-700 transition hover:border-[var(--accent-border)] hover:text-slate-950 lg:hidden"
-                  aria-label="Open navigation"
-                >
-                  <span className="flex flex-col gap-1.5">
-                    <span className="block h-0.5 w-4 rounded-full bg-current" />
-                    <span className="block h-0.5 w-4 rounded-full bg-current" />
-                    <span className="block h-0.5 w-4 rounded-full bg-current" />
-                  </span>
-                </button>
-
-                <div>
-                  <p className="text-sm font-medium text-[var(--accent)]">
-                    Frontend-only prototype
-                  </p>
-                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-slate-950">
-                    {sectionTitle}
-                  </h2>
-                </div>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  className="rounded-2xl border border-[var(--border-strong)] bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[var(--accent-border)] hover:text-slate-950"
-                  onClick={() => {
-                    void hideToTray();
-                  }}
-                >
-                  Hide to tray
-                </button>
-                <button
-                  type="button"
-                  className="rounded-2xl border border-[var(--border-strong)] bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-[var(--accent-border)] hover:text-slate-950"
-                  onClick={() => {
-                    if (section === "projects") {
-                      setDrawer({ type: "project", mode: "create" });
-                    }
-                  }}
-                >
-                  {section === "projects" ? "New project" : "Prototype action"}
-                </button>
-                <div className="rounded-2xl border border-[var(--border-soft)] bg-white/80 px-4 py-2 text-sm text-slate-500">
-                  Close or hide keeps monitoring running in the tray
-                </div>
-              </div>
-            </div>
-          </div>
+          <Topbar
+            sectionTitle={sectionTitle}
+            onOpenMobileNav={() => setMobileNavOpen(true)}
+          />
 
           <div className="min-h-0 flex-1 overflow-hidden p-5 md:p-8">
             <div className="h-full min-h-0 overflow-y-auto xl:overflow-hidden">

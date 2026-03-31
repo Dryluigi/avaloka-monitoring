@@ -222,7 +222,7 @@ Checklist:
 - [x] change Projects flow-list `Next run` formatting to `29 Mar 2026, 21:10:ss`
 - [x] change Projects flow detail `Next run` and `Last run` formatting to `29 Mar 2026, 21:10:ss`
 - [x] add project and flow filters to the Runs page
-- [ ] add a live clock to the topbar on every page using `29 Mar 2026, 21:10:ss` format
+- [x] add a live clock to the topbar on every page using `29 Mar 2026, 21:10:ss` format
 - [ ] add a max height with internal scrolling to the project variables section
 - [ ] add a max height with internal scrolling to the recent alarms section in Projects
 - [x] hide `STATE:...` and other runtime metadata lines from user-facing run summaries in Projects `Recent runs`
