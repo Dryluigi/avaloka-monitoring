@@ -1,5 +1,8 @@
 import type { ReactNode } from "react";
 
+import { CalendarIcon } from "../icons/CalendarIcon";
+import { HistoryIcon } from "../icons/HistoryIcon";
+import { IntervalIcon } from "../icons/IntervalIcon";
 import { STATUS_META } from "../../lib/config";
 import { formatScheduleTimestamp } from "../../lib/time";
 import type { DrawerState, FlowFilter, FlowSummary, ProjectSummary } from "../../types/app";
@@ -164,54 +167,5 @@ function FlowInfoItem(props: {
         {props.value}
       </div>
     </div>
-  );
-}
-
-function IntervalIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <circle cx="10" cy="10" r="6.5" />
-      <path d="M10 6.7v3.6l2.6 1.6" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function HistoryIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path d="M3.5 10a6.5 6.5 0 1 0 2-4.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3.5 4.5v3.2h3.2" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M10 6.9v3.2l2 1.2" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function CalendarIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-5 w-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <rect x="3.5" y="5" width="13" height="11" rx="2" />
-      <path d="M6.5 3.8v2.4M13.5 3.8v2.4M3.5 8.2h13" strokeLinecap="round" />
-    </svg>
   );
 }
