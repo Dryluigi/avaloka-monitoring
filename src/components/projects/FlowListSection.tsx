@@ -1,7 +1,8 @@
+import type { ReactNode } from "react";
+
 import { STATUS_META } from "../../lib/config";
 import { formatScheduleTimestamp } from "../../lib/time";
 import type { DrawerState, FlowFilter, FlowSummary, ProjectSummary } from "../../types/app";
-import { Metric } from "../ui/metrics";
 import { EmptyState, StatusPill } from "../ui/status";
 import { getReadableIntervalLabel } from "./helpers";
 
@@ -99,7 +100,7 @@ export function FlowListSection(props: {
                         : "border-[var(--border-soft)] bg-white hover:border-[var(--border-strong)]",
                 ].join(" ")}
               >
-                <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                <div className="space-y-4">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="text-sm font-semibold text-slate-900">{flow.name}</span>
@@ -118,17 +119,19 @@ export function FlowListSection(props: {
                     </div>
                   </div>
 
-                  <div className="grid gap-2 text-xs text-slate-500 sm:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)_minmax(0,1fr)]">
-                    <Metric
+                  <div className="grid gap-2.5 border-t border-[var(--border-soft)] pt-3 sm:grid-cols-3">
+                    <FlowInfoItem
+                      icon={<IntervalIcon />}
                       label="Interval"
                       value={getReadableIntervalLabel(flow.intervalLabel)}
-                      valueClassName="text-xs leading-5 text-slate-700"
                     />
-                    <Metric
+                    <FlowInfoItem
+                      icon={<HistoryIcon />}
                       label="Last run"
                       value={formatScheduleTimestamp(flow.lastRunAt)}
                     />
-                    <Metric
+                    <FlowInfoItem
+                      icon={<CalendarIcon />}
                       label="Next run"
                       value={formatScheduleTimestamp(flow.nextRunAt)}
                     />
@@ -140,5 +143,75 @@ export function FlowListSection(props: {
         </div>
       )}
     </section>
+  );
+}
+
+function FlowInfoItem(props: {
+  icon: ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-100 px-2.5 py-2">
+      <div
+        title={props.label}
+        aria-label={props.label}
+        className="flex shrink-0 items-center justify-center text-slate-500"
+      >
+        {props.icon}
+      </div>
+      <div className="min-w-0 text-[13px] font-medium leading-5 text-slate-700 break-words">
+        {props.value}
+      </div>
+    </div>
+  );
+}
+
+function IntervalIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <circle cx="10" cy="10" r="6.5" />
+      <path d="M10 6.7v3.6l2.6 1.6" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function HistoryIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <path d="M3.5 10a6.5 6.5 0 1 0 2-4.6" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M3.5 4.5v3.2h3.2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M10 6.9v3.2l2 1.2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 20 20"
+      className="h-5 w-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+    >
+      <rect x="3.5" y="5" width="13" height="11" rx="2" />
+      <path d="M6.5 3.8v2.4M13.5 3.8v2.4M3.5 8.2h13" strokeLinecap="round" />
+    </svg>
   );
 }
