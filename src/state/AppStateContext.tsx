@@ -9,6 +9,7 @@ import {
 } from "react";
 import { listen } from "@tauri-apps/api/event";
 
+import { APP_EVENTS } from "../lib/constants";
 import { withProjectCollectionCounts } from "../lib/project-summary";
 import { listFlows } from "../services/flow-api";
 import { listPrerequisites } from "../services/prerequisite-api";
@@ -174,7 +175,7 @@ export function AppStateProvider(props: { children: ReactNode }) {
 
     async function registerListeners() {
       unlistenStarted = await listen<FlowExecutionStartedEvent>(
-        "flow-execution-started",
+        APP_EVENTS.flowExecutionStarted,
         (event) => {
           if (cancelled) {
             return;
@@ -193,7 +194,7 @@ export function AppStateProvider(props: { children: ReactNode }) {
       );
 
       unlistenFinished = await listen<FlowExecutionFinishedEvent>(
-        "flow-execution-finished",
+        APP_EVENTS.flowExecutionFinished,
         (event) => {
           if (cancelled) {
             return;
@@ -213,7 +214,7 @@ export function AppStateProvider(props: { children: ReactNode }) {
       );
 
       unlistenAlarmCreated = await listen<AlarmCreatedEvent>(
-        "alarm-created",
+        APP_EVENTS.alarmCreated,
         () => {
           if (cancelled) {
             return;

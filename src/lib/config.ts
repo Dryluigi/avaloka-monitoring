@@ -1,4 +1,5 @@
 import type { AppSection, DrawerState, FlowStatus } from "../types/app";
+import { DRAWER_TITLES } from "./constants";
 
 export const NAV_ITEMS: { id: AppSection; label: string; description: string }[] = [
   { id: "dashboard", label: "Dashboard", description: "One-look execution overview" },
@@ -32,19 +33,27 @@ export const STATUS_META: Record<FlowStatus, { label: string; className: string 
 
 export function getDrawerTitle(drawer: DrawerState) {
   if (drawer.type === "project") {
-    return drawer.mode === "create" ? "Create project" : "Edit project";
+    return drawer.mode === "create"
+      ? DRAWER_TITLES.project.create
+      : DRAWER_TITLES.project.edit;
   }
 
   if (drawer.type === "flow") {
-    return drawer.mode === "create" ? "Create flow" : "Edit flow";
+    return drawer.mode === "create"
+      ? DRAWER_TITLES.flow.create
+      : DRAWER_TITLES.flow.edit;
   }
 
   if (drawer.type === "variable") {
-    return drawer.mode === "create" ? "Create variable" : "Edit variable";
+    return drawer.mode === "create"
+      ? DRAWER_TITLES.variable.create
+      : DRAWER_TITLES.variable.edit;
   }
 
   if (drawer.type === "prerequisite") {
-    return drawer.mode === "create" ? "Create prerequisite" : "Edit prerequisite";
+    return drawer.mode === "create"
+      ? DRAWER_TITLES.prerequisite.create
+      : DRAWER_TITLES.prerequisite.edit;
   }
 
   return "";

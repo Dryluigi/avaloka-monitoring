@@ -6,6 +6,7 @@ import { Drawer } from "./components/Drawer";
 import { ProjectsView } from "./components/ProjectsView";
 import { RunsView } from "./components/RunsView";
 import { Topbar } from "./components/Topbar";
+import { SECTION_TITLES } from "./lib/constants";
 import { NAV_ITEMS } from "./lib/config";
 import { AppStateProvider, useAppState } from "./state/AppStateContext";
 import { ConfirmDialogProvider } from "./state/ConfirmDialogContext";
@@ -22,19 +23,11 @@ function AppShell() {
     null;
 
   const sectionTitle = useMemo(() => {
-    if (section === "dashboard") {
-      return "Operational dashboard";
-    }
-
     if (section === "projects") {
-      return selectedProject?.name ?? "Projects";
+      return selectedProject?.name ?? SECTION_TITLES.projects;
     }
 
-    if (section === "runs") {
-      return "Recent runs";
-    }
-
-    return "Alarm center";
+    return SECTION_TITLES[section];
   }, [section, selectedProject?.name]);
 
   useEffect(() => {
