@@ -76,10 +76,24 @@ export function FlowInspectorPanels(props: {
           <SmallEmptyState label="No flow selected for this project." />
         ) : (
           <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <MetricPanel label="Executable" value={selectedFlow.executablePath} />
-              <MetricPanel label="Working directory" value={selectedFlow.workingDirectory} />
-              <MetricPanel label="Arguments" value={selectedFlow.args.join(" ") || "None"} />
+            <div className="space-y-3">
+              <FlowDetailField
+                label="Executable"
+                value={selectedFlow.executablePath}
+                monospace
+              />
+              <FlowDetailField
+                label="Arguments"
+                value={selectedFlow.args.join(" ") || "None"}
+                monospace
+              />
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <MetricPanel
+                label="Working directory"
+                value={selectedFlow.workingDirectory || "Not set"}
+              />
               <MetricPanel label="Timeout" value={`${selectedFlow.timeoutSeconds}s`} />
               <MetricPanel
                 label="Last run"
@@ -266,6 +280,30 @@ export function FlowInspectorPanels(props: {
           </div>
         )}
       </CardSection>
+    </div>
+  );
+}
+
+function FlowDetailField(props: {
+  label: string;
+  value: string;
+  monospace?: boolean;
+}) {
+  return (
+    <div className="rounded-2xl border border-[var(--border-soft)] bg-white px-4 py-3">
+      <div className="text-xs uppercase tracking-[0.16em] text-slate-400">
+        {props.label}
+      </div>
+      <div
+        className={[
+          "mt-2 break-words text-sm leading-6 text-slate-700",
+          props.monospace ? "font-mono text-[13px]" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {props.value}
+      </div>
     </div>
   );
 }

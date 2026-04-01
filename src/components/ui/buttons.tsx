@@ -12,7 +12,7 @@ export function ActionButton(props: {
       type="button"
       onClick={props.onClick}
       className={[
-        "rounded-xl border px-4 py-2 text-sm font-medium transition",
+        "whitespace-nowrap rounded-xl border px-4 py-2 text-sm font-medium transition",
         variant === "primary"
           ? "border-[var(--accent-border)] bg-[var(--accent)] text-white hover:bg-[var(--accent-strong)]"
           : variant === "danger"
