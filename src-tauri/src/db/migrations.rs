@@ -29,6 +29,7 @@ pub fn run_migrations(connection: &Connection) -> AppResult<()> {
             id TEXT PRIMARY KEY,
             project_id TEXT NOT NULL,
             name TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
             enabled INTEGER NOT NULL DEFAULT 1,
             interval_seconds INTEGER NOT NULL DEFAULT 300,
             executable_path TEXT NOT NULL,
@@ -100,6 +101,7 @@ pub fn run_migrations(connection: &Connection) -> AppResult<()> {
     )?;
 
     ensure_prerequisite_enabled_column(connection)?;
+    ensure_flow_description_column(connection)?;
     ensure_flow_run_columns(connection)?;
 
     seed_default_projects(connection)?;
@@ -153,6 +155,29 @@ fn ensure_prerequisite_enabled_column(connection: &Connection) -> AppResult<()> 
     if !has_enabled_column {
         connection.execute(
             "ALTER TABLE prerequisites ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1",
+            [],
+        )?;
+    }
+
+    Ok(())
+}
+
+fn ensure_flow_description_column(connection: &Connection) -> AppResult<()> {
+    let mut statement = connection.prepare("PRAGMA table_info(flows)")?;
+    let rows = statement.query_map([], |row| row.get::<_, String>(1))?;
+
+    let mut has_description_column = false;
+
+    for row in rows {
+        if row? == "description" {
+            has_description_column = true;
+            break;
+        }
+    }
+
+    if !has_description_column {
+        connection.execute(
+            "ALTER TABLE flows ADD COLUMN description TEXT NOT NULL DEFAULT ''",
             [],
         )?;
     }

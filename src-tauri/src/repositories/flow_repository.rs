@@ -15,6 +15,7 @@ pub fn list_flows(db_path: &Path) -> AppResult<Vec<FlowListItem>> {
             id,
             project_id,
             name,
+            description,
             enabled,
             interval_seconds,
             status,
@@ -56,6 +57,7 @@ pub fn create_flow(db_path: &Path, input: CreateFlowInput) -> AppResult<FlowList
             id,
             project_id,
             name,
+            description,
             enabled,
             interval_seconds,
             executable_path,
@@ -65,12 +67,13 @@ pub fn create_flow(db_path: &Path, input: CreateFlowInput) -> AppResult<FlowList
             next_run_at,
             status
         )
-        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)
+        VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
         "#,
         params![
             id,
             input.project_id,
             input.name.trim(),
+            input.description.trim(),
             input.enabled,
             input.interval_seconds,
             input.executable_path.trim(),
@@ -97,22 +100,23 @@ pub fn update_flow(db_path: &Path, input: UpdateFlowInput) -> AppResult<FlowList
         SET
             project_id = ?2,
             name = ?3,
-            enabled = ?4,
-            interval_seconds = ?5,
-            executable_path = ?6,
-            args_json = ?7,
-            working_directory = ?8,
-            timeout_seconds = ?9,
+            description = ?4,
+            enabled = ?5,
+            interval_seconds = ?6,
+            executable_path = ?7,
+            args_json = ?8,
+            working_directory = ?9,
+            timeout_seconds = ?10,
             next_run_at = CASE
-                WHEN ?4 = 1 AND last_run_at IS NOT NULL AND last_run_at != ''
-                    THEN datetime(last_run_at, '+' || ?5 || ' seconds')
-                WHEN ?4 = 1
-                    THEN datetime('now', 'localtime', '+' || ?5 || ' seconds')
-                WHEN ?4 = 0 THEN 'Paused'
+                WHEN ?5 = 1 AND last_run_at IS NOT NULL AND last_run_at != ''
+                    THEN datetime(last_run_at, '+' || ?6 || ' seconds')
+                WHEN ?5 = 1
+                    THEN datetime('now', 'localtime', '+' || ?6 || ' seconds')
+                WHEN ?5 = 0 THEN 'Paused'
                 ELSE next_run_at
             END,
             status = CASE
-                WHEN ?4 = 0 THEN 'disabled'
+                WHEN ?5 = 0 THEN 'disabled'
                 WHEN status = 'disabled' THEN 'success'
                 ELSE status
             END,
@@ -123,6 +127,7 @@ pub fn update_flow(db_path: &Path, input: UpdateFlowInput) -> AppResult<FlowList
             input.id,
             input.project_id,
             input.name.trim(),
+            input.description.trim(),
             input.enabled,
             input.interval_seconds,
             input.executable_path.trim(),
@@ -150,6 +155,7 @@ fn get_flow(db_path: &Path, id: &str) -> AppResult<Option<FlowListItem>> {
             id,
             project_id,
             name,
+            description,
             enabled,
             interval_seconds,
             status,
@@ -171,18 +177,19 @@ fn get_flow(db_path: &Path, id: &str) -> AppResult<Option<FlowListItem>> {
 }
 
 fn map_flow_list_item(row: &rusqlite::Row<'_>) -> rusqlite::Result<FlowListItem> {
-    let interval_seconds: i64 = row.get(4)?;
-    let status: String = row.get(5)?;
-    let raw_last_run_at: Option<String> = row.get(6)?;
-    let raw_next_run_at: Option<String> = row.get(7)?;
-    let args_json: String = row.get(9)?;
+    let interval_seconds: i64 = row.get(5)?;
+    let status: String = row.get(6)?;
+    let raw_last_run_at: Option<String> = row.get(7)?;
+    let raw_next_run_at: Option<String> = row.get(8)?;
+    let args_json: String = row.get(10)?;
     let args = serde_json::from_str::<Vec<String>>(&args_json).unwrap_or_default();
 
     Ok(FlowListItem {
         id: row.get(0)?,
         project_id: row.get(1)?,
         name: row.get(2)?,
-        enabled: row.get(3)?,
+        description: row.get(3)?,
+        enabled: row.get(4)?,
         interval_seconds,
         interval_label: format_interval_label(interval_seconds),
         status: status.clone(),
@@ -194,10 +201,10 @@ fn map_flow_list_item(row: &rusqlite::Row<'_>) -> rusqlite::Result<FlowListItem>
                 "Pending schedule".into()
             }
         }),
-        executable_path: row.get(8)?,
+        executable_path: row.get(9)?,
         args,
-        working_directory: row.get(10)?,
-        timeout_seconds: row.get(11)?,
+        working_directory: row.get(11)?,
+        timeout_seconds: row.get(12)?,
         state_count: 0,
     })
 }

@@ -118,7 +118,7 @@ export function FlowListSection(props: {
                       </StatusPill>
                     </div>
                     <div className="mt-2 text-xs text-slate-500">
-                      {flow.executablePath} {flow.args.join(" ")}
+                      {flow.description ?? ""}
                     </div>
                   </div>
 

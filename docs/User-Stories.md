@@ -61,6 +61,7 @@ Acceptance notes:
 
 - flow is created within a selected project
 - user can define the main runtime configuration for the flow
+- user can optionally enter a flow description
 
 ### View Flows
 
@@ -69,7 +70,7 @@ As a user, I want to view flows inside a project so that I can understand what m
 Acceptance notes:
 
 - user can see all flows in a project
-- flow list shows essential details such as name, interval, and status
+- flow list shows essential details such as name, description, interval, and status
 
 ### Update Flow
 
@@ -78,6 +79,7 @@ As a user, I want to update a flow so that I can change its schedule or executio
 Acceptance notes:
 
 - user can edit flow metadata and runtime configuration
+- user can edit flow description
 - changes are persisted locally
 
 ### Delete Flow

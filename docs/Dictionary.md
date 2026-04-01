@@ -47,6 +47,7 @@ Suggested fields:
 - `id`
 - `project_id`
 - `name`
+- `description`
 - `enabled`
 - `interval_seconds`
 - `executable_path`

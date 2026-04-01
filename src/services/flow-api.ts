@@ -28,6 +28,7 @@ export function createFlow(projectId: string, input: FlowDraft) {
     input: {
       projectId,
       name: input.name || "Untitled flow",
+      description: input.description,
       enabled: input.enabled,
       intervalSeconds: parseIntervalSeconds(input.intervalSeconds),
       executablePath: input.executablePath,
@@ -44,6 +45,7 @@ export function updateFlow(id: string, projectId: string, input: FlowDraft) {
       id,
       projectId,
       name: input.name,
+      description: input.description,
       enabled: input.enabled,
       intervalSeconds: parseIntervalSeconds(input.intervalSeconds),
       executablePath: input.executablePath,

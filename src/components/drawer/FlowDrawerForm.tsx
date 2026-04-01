@@ -6,7 +6,7 @@ import { createFlow, deleteFlow, updateFlow } from "../../services/flow-api";
 import { useAppState } from "../../state/AppStateContext";
 import type { FlowDraft } from "../../types/app";
 import { DrawerActions } from "../ui/buttons";
-import { Input, ToggleGroup } from "../ui/form-controls";
+import { Input, TextArea, ToggleGroup } from "../ui/form-controls";
 import { Field } from "../ui/layout";
 
 function intervalLabelToSeconds(intervalLabel: string) {
@@ -65,6 +65,7 @@ export function FlowDrawerForm() {
 
   const [draft, setDraft] = useState<FlowDraft>({
     name: "",
+    description: "",
     enabled: true,
     intervalSeconds: "900",
     executablePath: "",
@@ -76,6 +77,7 @@ export function FlowDrawerForm() {
   useEffect(() => {
     setDraft({
       name: flowValue?.name ?? "",
+      description: flowValue?.description ?? "",
       enabled: flowValue?.enabled ?? true,
       intervalSeconds: flowValue
         ? intervalLabelToSeconds(flowValue.intervalLabel)
@@ -99,6 +101,19 @@ export function FlowDrawerForm() {
             }))
           }
           placeholder="Login health check"
+        />
+      </Field>
+      <Field label="Description">
+        <TextArea
+          value={draft.description}
+          onChange={(event) =>
+            setDraft((current) => ({
+              ...current,
+              description: event.target.value,
+            }))
+          }
+          placeholder="Short explanation of what this flow checks and why it matters."
+          className="min-h-24"
         />
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">

@@ -23,6 +23,7 @@ export type FlowSummary = {
   id: string;
   projectId: string;
   name: string;
+  description?: string;
   enabled: boolean;
   intervalLabel: string;
   status: FlowStatus;
@@ -125,6 +126,7 @@ export type ProjectDraft = {
 
 export type FlowDraft = {
   name: string;
+  description: string;
   enabled: boolean;
   intervalSeconds: string;
   executablePath: string;

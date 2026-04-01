@@ -5,6 +5,7 @@ use serde::{Deserialize, Serialize};
 pub struct CreateFlowInput {
     pub project_id: String,
     pub name: String,
+    pub description: String,
     pub enabled: bool,
     pub interval_seconds: i64,
     pub executable_path: String,
@@ -19,6 +20,7 @@ pub struct UpdateFlowInput {
     pub id: String,
     pub project_id: String,
     pub name: String,
+    pub description: String,
     pub enabled: bool,
     pub interval_seconds: i64,
     pub executable_path: String,
@@ -39,6 +41,7 @@ pub struct FlowListItem {
     pub id: String,
     pub project_id: String,
     pub name: String,
+    pub description: String,
     pub enabled: bool,
     pub interval_seconds: i64,
     pub interval_label: String,
