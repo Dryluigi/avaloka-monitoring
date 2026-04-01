@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 
 import { withProjectCounts } from "../../lib/project-summary";
-import { createProject, updateProject } from "../../services/project-api";
+import { createProject, deleteProject, updateProject } from "../../services/project-api";
 import { useAppState } from "../../state/AppStateContext";
+import { useConfirmDialog } from "../../state/ConfirmDialogContext";
 import type { ProjectDraft } from "../../types/app";
 import { DrawerActions } from "../ui/buttons";
 import { Input, TextArea, ToggleGroup } from "../ui/form-controls";
@@ -14,10 +15,18 @@ export function ProjectDrawerForm() {
     flows,
     projects,
     setDrawer,
+    setAlarms,
+    setFlowStateEntries,
+    setFlows,
+    setPrerequisites,
     setProjects,
     setSelectedProjectId,
+    setSelectedFlowId,
+    setRuns,
+    setVariables,
     variables,
   } = useAppState();
+  const { confirm } = useConfirmDialog();
 
   if (drawer.type !== "project") {
     return null;
@@ -128,6 +137,79 @@ export function ProjectDrawerForm() {
           })();
         }}
         saveLabel={drawer.mode === "create" ? "Create project" : "Save project"}
+        onDestructive={
+          drawer.mode === "edit" && drawer.projectId
+            ? () => {
+                void (async () => {
+                  try {
+                    const projectId = drawer.projectId;
+
+                    if (!projectId) {
+                      return;
+                    }
+
+                    const confirmed = await confirm({
+                      title: "Delete project?",
+                      message:
+                        "This will remove the project and its related flows, variables, prerequisites, runs, alarms, and flow state from the app.",
+                      confirmLabel: "Delete project",
+                      tone: "danger",
+                    });
+
+                    if (!confirmed) {
+                      return;
+                    }
+
+                    await deleteProject(projectId);
+
+                    const remainingProjects = projects.filter(
+                      (project) => project.id !== projectId,
+                    );
+                    const remainingFlows = flows.filter(
+                      (flow) => flow.projectId !== projectId,
+                    );
+                    const remainingVariables = variables.filter(
+                      (variable) => variable.projectId !== projectId,
+                    );
+                    const remainingProjectFlowIds = new Set(
+                      flows
+                        .filter((flow) => flow.projectId === projectId)
+                        .map((flow) => flow.id),
+                    );
+
+                    setProjects(remainingProjects);
+                    setFlows(remainingFlows);
+                    setVariables(remainingVariables);
+                    setPrerequisites((current) =>
+                      current.filter(
+                        (prerequisite) => !remainingProjectFlowIds.has(prerequisite.flowId),
+                      ),
+                    );
+                    setRuns((current) =>
+                      current.filter((run) => !remainingProjectFlowIds.has(run.flowId)),
+                    );
+                    setAlarms((current) =>
+                      current.filter((alarm) => !remainingProjectFlowIds.has(alarm.flowId)),
+                    );
+                    setFlowStateEntries((current) =>
+                      current.filter((entry) => !remainingProjectFlowIds.has(entry.flowId)),
+                    );
+
+                    const nextProjectId = remainingProjects[0]?.id ?? "";
+                    const nextFlowId =
+                      remainingFlows.find((flow) => flow.projectId === nextProjectId)?.id ?? "";
+
+                    setSelectedProjectId(nextProjectId);
+                    setSelectedFlowId(nextFlowId);
+                    setDrawer({ type: null });
+                  } catch (error) {
+                    console.error("Failed to delete project", error);
+                  }
+                })();
+              }
+            : undefined
+        }
+        destructiveLabel={drawer.mode === "edit" ? "Delete project" : undefined}
       />
     </>
   );

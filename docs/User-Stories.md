@@ -47,6 +47,8 @@ As a user, I want to delete a project so that I can remove monitoring setups I n
 Acceptance notes:
 
 - user can delete a project
+- user can delete a project from the project edit drawer
+- deleted project is removed from the project list immediately
 - related flows and configuration are removed with it or handled consistently by the app
 
 ---

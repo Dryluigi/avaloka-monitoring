@@ -4,6 +4,7 @@ import { withProjectCounts } from "../../lib/project-summary";
 import { formatSecondsBreakdown } from "../../lib/time";
 import { createFlow, deleteFlow, updateFlow } from "../../services/flow-api";
 import { useAppState } from "../../state/AppStateContext";
+import { useConfirmDialog } from "../../state/ConfirmDialogContext";
 import type { FlowDraft } from "../../types/app";
 import { DrawerActions } from "../ui/buttons";
 import { Input, TextArea, ToggleGroup } from "../ui/form-controls";
@@ -53,6 +54,7 @@ export function FlowDrawerForm() {
     setSelectedFlowId,
     variables,
   } = useAppState();
+  const { confirm } = useConfirmDialog();
 
   if (drawer.type !== "flow") {
     return null;
@@ -258,6 +260,18 @@ export function FlowDrawerForm() {
                     const flowId = drawer.flowId;
 
                     if (!flowId) {
+                      return;
+                    }
+
+                    const confirmed = await confirm({
+                      title: "Delete flow?",
+                      message:
+                        "This will remove the flow configuration and its local history from the app.",
+                      confirmLabel: "Delete flow",
+                      tone: "danger",
+                    });
+
+                    if (!confirmed) {
                       return;
                     }
 

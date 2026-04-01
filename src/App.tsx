@@ -8,6 +8,7 @@ import { RunsView } from "./components/RunsView";
 import { Topbar } from "./components/Topbar";
 import { NAV_ITEMS } from "./lib/config";
 import { AppStateProvider, useAppState } from "./state/AppStateContext";
+import { ConfirmDialogProvider } from "./state/ConfirmDialogContext";
 import type { AppSection } from "./types/app";
 
 function AppShell() {
@@ -183,8 +184,10 @@ function AppShell() {
 
 export default function App() {
   return (
-    <AppStateProvider>
-      <AppShell />
-    </AppStateProvider>
+    <ConfirmDialogProvider>
+      <AppStateProvider>
+        <AppShell />
+      </AppStateProvider>
+    </ConfirmDialogProvider>
   );
 }

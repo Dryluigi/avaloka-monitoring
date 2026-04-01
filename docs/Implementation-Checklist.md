@@ -212,6 +212,7 @@ Checklist:
 
 - [ ] improve validation for project and flow forms
 - [ ] improve error messaging in the UI
+- [x] add a reusable custom confirmation popup for destructive actions
 - [ ] review secret-handling paths for accidental exposure
 - [ ] add edge-case handling for invalid executable paths
 - [ ] add edge-case handling for malformed prerequisite output

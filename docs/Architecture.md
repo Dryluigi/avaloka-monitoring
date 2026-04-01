@@ -133,6 +133,26 @@ The drawer is part of the app shell layer, but the form behavior is now split in
 
 ---
 
+### Global confirmation dialog
+Files:
+- `src/state/ConfirmDialogContext.tsx`
+
+Responsibility:
+- provide a reusable app-level confirmation popup
+- expose a simple promise-based `confirm(...)` API
+- keep destructive-action confirmation behavior consistent across features
+
+Why it is global:
+- destructive actions can be triggered from different forms and screens
+- centralizing confirmation avoids duplicated modal state and browser-native confirm dialogs
+- feature components stay focused on their own save/delete logic instead of popup orchestration
+
+Design rule:
+- feature components should request confirmation through the shared confirmation context
+- the confirmation popup should be reused instead of reimplemented per screen
+
+---
+
 ### Reusable UI primitives
 Files:
 - `src/components/ui/buttons.tsx`
@@ -207,6 +227,7 @@ This separation matters because it lets us replace the remaining mock-backed dom
 - topbar behavior
 - page switching
 - global overlay mounting
+- global confirmation-provider mounting
 
 It is not responsible for:
 - dashboard-specific calculations
@@ -224,6 +245,7 @@ This includes:
 - current selected project and flow
 - filter state
 - drawer state
+- access to shared app-level confirmation behavior
 
 This is the minimum shared layer needed to avoid excessive prop passing.
 
@@ -249,6 +271,11 @@ That means:
 - save actions update the shared state directly
 
 This is a good fit for a desktop app pattern where overlays are global UI concerns.
+
+The confirmation popup follows the same principle:
+- any feature component can request confirmation through `useConfirmDialog()`
+- the provider owns popup state and rendering once at the app-shell level
+- destructive actions stay consistent without duplicating local modal logic
 
 ---
 
@@ -696,6 +723,7 @@ The intended rules for future work are:
 - Each page should derive the data it needs from shared state and data sources.
 - Reusable UI components should stay presentation-only.
 - Global overlays like the drawer should read shared state directly.
+- Reusable confirmation flows should go through the shared confirmation context instead of ad hoc per-screen dialogs.
 - Mock data should stay isolated from components.
 - Backend integration should replace data sources, not force a structural rewrite of the UI layer.
 
