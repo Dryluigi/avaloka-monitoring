@@ -14,7 +14,7 @@ import type { AppSection } from "./types/app";
 function AppShell() {
   const [section, setSection] = useState<AppSection>("dashboard");
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const { projects, selectedProjectId } = useAppState();
+  const { projects, selectedProjectId, setDrawer } = useAppState();
 
   const selectedProject =
     projects.find((project) => project.id === selectedProjectId) ??
@@ -98,6 +98,11 @@ function AppShell() {
           <Topbar
             sectionTitle={sectionTitle}
             onOpenMobileNav={() => setMobileNavOpen(true)}
+            onNewProject={
+              section === "projects"
+                ? () => setDrawer({ type: "project", mode: "create" })
+                : undefined
+            }
           />
 
           <div className="min-h-0 flex-1 overflow-hidden p-5 md:p-8">

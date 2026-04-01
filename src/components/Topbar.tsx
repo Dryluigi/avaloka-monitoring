@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 
 import { formatFullTimestamp } from "../lib/time";
+import { ActionButton } from "./ui/buttons";
 
 export function Topbar(props: {
   sectionTitle: string;
   onOpenMobileNav: () => void;
+  onNewProject?: () => void;
 }) {
   const [now, setNow] = useState(() => new Date());
 
@@ -46,6 +48,11 @@ export function Topbar(props: {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {props.onNewProject ? (
+            <ActionButton variant="primary" onClick={props.onNewProject}>
+              New project
+            </ActionButton>
+          ) : null}
           <div className="rounded-2xl border border-[var(--border-soft)] bg-white/80 px-4 py-2 text-sm text-slate-500">
             {formatFullTimestamp(now)}
           </div>
