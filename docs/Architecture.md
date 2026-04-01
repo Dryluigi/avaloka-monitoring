@@ -29,8 +29,12 @@ The main design goal is to keep the app easy to evolve from prototype into a rea
 ## Frontend Structure
 
 ### App shell
-File:
+Files:
 - `src/App.tsx`
+- `src/components/Topbar.tsx`
+- `src/components/shell/DesktopSidebar.tsx`
+- `src/components/shell/MobileNavigation.tsx`
+- `src/components/shell/NavigationMenu.tsx`
 
 Responsibility:
 - render the application shell
@@ -40,7 +44,7 @@ Responsibility:
 - mount the shared app state provider
 - mount the global drawer
 
-`App.tsx` should stay thin. It is intentionally not responsible for preparing large page-specific payloads anymore.
+`App.tsx` should stay thin. It is intentionally not responsible for preparing large page-specific payloads anymore, and the shell chrome is now split into focused sidebar, topbar, and mobile-navigation components.
 
 ---
 
@@ -174,6 +178,7 @@ Examples:
 - `CardSection`
 - `Field`
 - `StatCard`
+- `IconStatCard`
 - `Metric`
 - `MetricPanel`
 - `StatusPill`
@@ -331,15 +336,13 @@ This makes them:
 - easier to test
 - easier to replace later with a design system if needed
 
-### 3. Split shell components next
-The next natural structural step is to split:
-- sidebar
-- topbar
-- mobile navigation
+### 3. Keep shell components modular
+The shell is now split so that:
+- `App.tsx` owns section switching and provider wiring
+- desktop sidebar, mobile navigation, and topbar live in focused components
+- shared navigation rendering stays in one place instead of being duplicated
 
-out of `App.tsx`.
-
-That would make the shell layer as modular as the page layer already is.
+This keeps the shell crawlable even as navigation or layout details evolve.
 
 ### 4. Use Tauri events for live updates
 For live execution feedback, the primary mechanism is Tauri events rather than frontend polling.
@@ -417,16 +420,23 @@ Current files:
 - `src-tauri/src/main.rs`
 - `src-tauri/src/lib.rs`
 - `src-tauri/src/scheduler/mod.rs`
+- `src-tauri/src/scheduler/execution.rs`
 - `src-tauri/src/scheduler/events.rs`
+- `src-tauri/src/scheduler/notify.rs`
 - `src-tauri/src/scheduler/runtime.rs`
-- `src-tauri/src/scheduler/store.rs`
+- `src-tauri/src/scheduler/store/mod.rs`
+- `src-tauri/src/scheduler/store/read.rs`
+- `src-tauri/src/scheduler/store/write.rs`
 - `src-tauri/src/scheduler/types.rs`
 
 Current state:
 - `main.rs` boots the app
 - `lib.rs` contains the Tauri builder and startup composition
-- `scheduler/mod.rs` coordinates scheduling and flow execution
-- scheduler helpers are split by responsibility into event emission, runtime command handling, query/storage access, and shared scheduler types
+- `scheduler/mod.rs` coordinates scanning and worker-thread dispatch
+- `scheduler/execution.rs` owns the flow and prerequisite execution path
+- `scheduler/notify.rs` owns alarm persistence side effects such as desktop notifications and sound
+- `scheduler/store/read.rs` and `scheduler/store/write.rs` split query/loading from persistence/update responsibilities
+- scheduler helpers are split by responsibility into execution flow, event emission, runtime command handling, notifications, storage access, and shared scheduler types
 
 This is no longer just the default Tauri baseline. The backend has started moving into a more maintainable module-oriented shape, especially around the runtime scheduler.
 

@@ -1,6 +1,13 @@
+import { AlertIcon } from "../icons/AlertIcon";
+import { CalendarIcon } from "../icons/CalendarIcon";
+import { ExecutingIcon } from "../icons/ExecutingIcon";
+import { FlowStackIcon } from "../icons/FlowStackIcon";
+import { ProjectIcon } from "../icons/ProjectIcon";
+import { PulseIcon } from "../icons/PulseIcon";
 import { formatScheduleTimestamp } from "../../lib/time";
 import type { DrawerState, ProjectSummary } from "../../types/app";
 import { ActionButton } from "../ui/buttons";
+import { IconStatCard } from "../ui/metrics";
 import { StatusPill } from "../ui/status";
 
 export function ProjectHeader(props: {
@@ -89,177 +96,34 @@ export function ProjectHeader(props: {
 
       {projectStats ? (
         <div className="mt-4 grid gap-2.5 md:grid-cols-2 xl:grid-cols-5">
-          <ProjectHeaderStat
+          <IconStatCard
             icon={<FlowStackIcon />}
             label="Total flows"
             value={String(projectStats.totalFlows)}
           />
-          <ProjectHeaderStat
+          <IconStatCard
             icon={<PulseIcon />}
             label="Active"
             value={String(projectStats.activeFlows)}
           />
-          <ProjectHeaderStat
+          <IconStatCard
             icon={<AlertIcon />}
             label="Failing"
             value={String(projectStats.failingFlows)}
           />
-          <ProjectHeaderStat
+          <IconStatCard
             icon={<ExecutingIcon />}
             label="Executing"
             value={String(projectStats.executingFlows)}
             tone="teal"
           />
-          <ProjectHeaderStat
-            icon={<CalendarSmallIcon />}
+          <IconStatCard
+            icon={<CalendarIcon />}
             label="Next run"
             value={formatScheduleTimestamp(projectStats.nextDue)}
           />
         </div>
       ) : null}
     </div>
-  );
-}
-
-function ProjectHeaderStat(props: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-  tone?: "default" | "teal";
-}) {
-  return (
-    <div
-      className={[
-        "flex items-center gap-3 rounded-xl border px-3 py-2.5",
-        props.tone === "teal"
-          ? "border-teal-200 bg-teal-50"
-          : "border-slate-200 bg-white",
-      ].join(" ")}
-    >
-      <span
-        className={[
-          "inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-          props.tone === "teal"
-            ? "bg-teal-100 text-teal-700"
-            : "bg-slate-100 text-slate-500",
-        ].join(" ")}
-      >
-        {props.icon}
-      </span>
-      <div className="min-w-0">
-        <div className="text-[11px] uppercase tracking-[0.14em] text-slate-400">
-          {props.label}
-        </div>
-        <div className="mt-1 text-sm font-medium leading-5 text-slate-800 break-words">
-          {props.value}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ProjectIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-4.5 w-4.5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        d="M3.5 5.5h5l1.4 1.7H16.5v7.3a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function FlowStackIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <rect x="4" y="4" width="12" height="3.5" rx="1.2" />
-      <rect x="4" y="8.2" width="12" height="3.5" rx="1.2" />
-      <rect x="4" y="12.4" width="12" height="3.5" rx="1.2" />
-    </svg>
-  );
-}
-
-function PulseIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path
-        d="M3.5 10h3l1.7-3.2 3.2 6 1.6-2.8h3.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function AlertIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <path d="M10 4.2 16 15H4z" strokeLinejoin="round" />
-      <path d="M10 7.5v3.8M10 13.6h.01" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ExecutingIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <circle cx="10" cy="10" r="5.8" />
-      <path
-        d="M10 6.8v3.4l2.3 1.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function CalendarSmallIcon() {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 20 20"
-      className="h-4 w-4"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-    >
-      <rect x="3.5" y="5" width="13" height="11" rx="2" />
-      <path d="M6.5 3.8v2.4M13.5 3.8v2.4M3.5 8.2h13" strokeLinecap="round" />
-    </svg>
   );
 }
